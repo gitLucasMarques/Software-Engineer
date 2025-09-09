@@ -5,3 +5,8 @@ O projeto visa criar uma plataforma de e-commerce completa para a venda de jogos
 A loja virtual incluirá módulos essenciais para o usuário, como cadastro e login, um catálogo de produtos com busca e detalhes de jogos, um carrinho de compras, um processo de checkout seguro com integração para pagamentos, histórico de pedidos e uma lista de favoritos. Para a administração do site, haverá um painel exclusivo que permitirá o gerenciamento completo de produtos, pedidos e usuários, além de fornecer relatórios de vendas para análise do negócio.
 
 A metodologia ágil será utilizada para a execução do projeto, dividida em cinco sprints. A equipe será composta por um gerente de projeto, desenvolvedores frontend e backend e um designer de UI/UX. As fases cobrirão desde o planejamento e design até o desenvolvimento das funcionalidades de e-commerce e, por fim, os testes e a correção de bugs. O plano também destaca requisitos não-funcionais importantes, como a necessidade de o site ser responsivo, rápido e seguro.
+
+Lucas A. N. Marques
+João Victor Rocha
+Nicolas de Mello Freitas
+Gabriel Rodrigues
