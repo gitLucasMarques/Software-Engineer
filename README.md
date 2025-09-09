@@ -1,4 +1,4 @@
-# Software-Engineer
+# Software-Engineer / E-Commerce of Games
 
 O projeto visa criar uma plataforma de e-commerce completa para a venda de jogos digitais e físicos. A arquitetura será full-stack JavaScript, utilizando Node.js com Express.js no backend para gerenciar a API e MySQL como banco de dados, facilitado pelo uso de um ORM como o Sequelize. No frontend, a base será JavaScript puro, HTML5 e CSS3, com a possibilidade de usar frameworks como React ou Vue.js para uma interface mais moderna. O foco principal é a segurança, a usabilidade e a escalabilidade da plataforma.
 
