@@ -2,30 +2,24 @@ const express = require('express');
 const sequelize = require('./config/database');
 require('dotenv').config();
 
-// Criar aplicação Express
 const app = express();
 
-// Middleware básico
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Rota básica para verificar se a API está funcionando
 app.get('/', (req, res) => {
   res.send('API do E-commerce de Jogos funcionando!');
 });
 
 // Importar e usar rotas
 
-// Middleware para tratamento de erros
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ message: 'Erro no servidor', error: process.env.NODE_ENV === 'development' ? err.message : {} });
 });
 
-// Definir porta
 const PORT = process.env.PORT || 5000;
 
-// Função para iniciar o servidor
 async function startServer() {
   try {
     await sequelize.authenticate();
@@ -45,10 +39,8 @@ async function startServer() {
   }
 }
 
-// Verificar se o arquivo está sendo executado diretamente ou importado
 if (require.main === module) {
   startServer();
 } else {
-  // Exportar para testes
   module.exports = { app, startServer };
 }
