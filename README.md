@@ -10,3 +10,4 @@ Lucas A. N. Marques
 João Victor Rocha
 Nicolas de Mello Freitas
 Gabriel Rodrigues
+Marcelo de Carvalho Machado
