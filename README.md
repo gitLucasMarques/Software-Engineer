@@ -6,8 +6,8 @@ A loja virtual incluirá módulos essenciais para o usuário, como cadastro e lo
 
 A metodologia ágil será utilizada para a execução do projeto, dividida em cinco sprints. A equipe será composta por um gerente de projeto, desenvolvedores frontend e backend e um designer de UI/UX. As fases cobrirão desde o planejamento e design até o desenvolvimento das funcionalidades de e-commerce e, por fim, os testes e a correção de bugs. O plano também destaca requisitos não-funcionais importantes, como a necessidade de o site ser responsivo, rápido e seguro.
 
-Lucas A. N. Marques
-João Victor Rocha
-Nicolas de Mello Freitas
-Gabriel Rodrigues
+Lucas A. N. Marques |
+João Victor Rocha |
+Nicolas de Mello Freitas |
+Gabriel Rodrigues |
 Marcelo de Carvalho Machado
