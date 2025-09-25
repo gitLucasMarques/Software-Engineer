@@ -1,21 +1,24 @@
-// Importa o módulo Express
-const express = require('express');
+import React from "react";
+import { Routes, Route } from "react-router-dom";
 
-// Cria uma instância do aplicativo
-const app = express();
+// Páginas
+import Home from "./pages/home";
+// você pode criar depois Login.js, Cart.js, Product.js etc.
 
-// Define a porta (Railway usa process.env.PORT)
-const PORT = process.env.PORT || 3000;
+function App() {
+  return (
+    <div>
+      <Routes>
+        {/* Página inicial */}
+        <Route path="/" element={<Home />} />
 
-// Middleware opcional para lidar com JSON
-app.use(express.json());
+        {/* Exemplo de rotas futuras */}
+        {/* <Route path="/login" element={<Login />} /> */}
+        {/* <Route path="/cart" element={<Cart />} /> */}
+        {/* <Route path="/product/:id" element={<Product />} /> */}
+      </Routes>
+    </div>
+  );
+}
 
-// Rota principal
-app.get('/', (req, res) => {
-  res.send('🚀 Hello World com Express!');
-});
-
-// Inicia o servidor
-app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
-});
+export default App;
