@@ -1,0 +1,177 @@
+/* Reset básico */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Corpo */
+body {
+    font-family: Arial, sans-serif;
+    background: #f5f5f5;
+}
+
+/* Cabeçalho */
+header {
+    background: #ffe600;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+header h1 {
+    font-size: 24px;
+    color: #333;
+}
+
+header .busca {
+    display: flex;
+    gap: 10px;
+}
+
+header input {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+header button {
+    padding: 8px 12px;
+    border: none;
+    background: #333;
+    color: white;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+header button:hover {
+    background: #555;
+}
+
+header .menu a {
+    margin-left: 20px;
+    text-decoration: none;
+    color: #333;
+    font-weight: bold;
+}
+
+/* Conteúdo principal */
+main {
+    padding: 20px;
+}
+
+main h2 {
+    margin-bottom: 20px;
+}
+
+/* Grid de produtos */
+.produtos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.produto {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 15px;
+    text-align: center;
+    transition: transform 0.2s;
+}
+
+.produto:hover {
+    transform: scale(1.03);
+}
+
+.produto img {
+    width: 100%;
+    max-height: 150px;
+    object-fit: contain;
+}
+
+.produto p {
+    margin: 10px 0;
+}
+
+.produto button {
+    margin: 5px;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.produto .ver {
+    background: #0077ff;
+    color: white;
+}
+
+.produto .carrinho {
+    background: #28a745;
+    color: white;
+}
+
+.produto button:hover {
+    opacity: 0.8;
+}
+
+/* Página de produto */
+.produto-detalhe {
+    display: flex;
+    gap: 20px;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin: 20px auto;
+    max-width: 800px;
+}
+
+.produto-detalhe img {
+    max-width: 300px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+}
+
+.produto-detalhe .info {
+    flex: 1;
+}
+
+/* Login */
+.form-container {
+    max-width: 400px;
+    margin: 40px auto;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.form-container form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.form-container input {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.form-container button {
+    background: #0077ff;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+/* Carrinho */
+#lista-carrinho {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin: 20px 0;
+}
