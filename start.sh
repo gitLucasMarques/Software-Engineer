@@ -1,7 +1,14 @@
 #!/bin/bash
 
-echo "🚀 Iniciando E-commerce de Jogos e Hardware..."
+echo "════════════════════════════════════════════════════════════════"
+echo "   🚀 VOXEL - Iniciando Servidores"
+echo "════════════════════════════════════════════════════════════════"
 echo ""
+
+# Cores
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+NC='\033[0m'
 
 # Função para matar processos ao sair
 cleanup() {
@@ -13,6 +20,17 @@ cleanup() {
 
 trap cleanup EXIT INT TERM
 
+# Verificar se MongoDB está rodando
+if ! pgrep -x "mongod" > /dev/null; then
+    echo "⚠️  MongoDB não está rodando. Tentando iniciar..."
+    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        sudo systemctl start mongod
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        brew services start mongodb-community
+    fi
+    sleep 2
+fi
+
 # Iniciar backend
 echo "📦 Iniciando Backend (porta 5000)..."
 cd backend
@@ -20,25 +38,23 @@ npm start &
 BACKEND_PID=$!
 
 # Aguardar backend iniciar
-sleep 3
+sleep 5
 
-# Iniciar frontend
+# Iniciar frontend  
 echo "🎨 Iniciando Frontend (porta 3001)..."
 cd ../frontend
-npm start &
+PORT=3001 npm start &
 FRONTEND_PID=$!
 
 echo ""
 echo "════════════════════════════════════════════════════════════════"
-echo "  ✅ Servidores iniciados com sucesso!"
+echo -e "  ${GREEN}✅ Servidores iniciados com sucesso!${NC}"
 echo "════════════════════════════════════════════════════════════════"
 echo ""
-echo "  📦 Backend:  http://localhost:5000"
-echo "  🎨 Frontend: http://localhost:3001"
+echo -e "  ${BLUE}Backend:${NC}  http://localhost:5000"
+echo -e "  ${BLUE}Frontend:${NC} http://localhost:3001"
 echo ""
-echo "  📊 Banco de Dados: MongoDB (game_ecommerce)"
-echo "  📦 Produtos: 118 (81 jogos + 37 hardware)"
-echo ""
+echo "  Aguarde alguns segundos para o frontend compilar..."
 echo "  Pressione Ctrl+C para encerrar ambos os servidores"
 echo ""
 echo "════════════════════════════════════════════════════════════════"
