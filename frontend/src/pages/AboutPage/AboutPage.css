@@ -1,0 +1,92 @@
+.about-page {
+  padding: 40px 20px;
+  min-height: 70vh;
+}
+
+.about-page h1 {
+  text-align: center;
+  font-size: 2.5rem;
+  margin-bottom: 40px;
+  color: var(--text-color);
+}
+
+.about-section {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 30px;
+  margin-bottom: 30px;
+}
+
+.about-section h2 {
+  font-size: 1.8rem;
+  margin-bottom: 20px;
+  color: var(--primary-color);
+}
+
+.about-section p {
+  font-size: 1.1rem;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  margin-bottom: 15px;
+}
+
+.benefits-list {
+  list-style: none;
+  padding: 0;
+}
+
+.benefits-list li {
+  font-size: 1.1rem;
+  padding: 12px 0;
+  color: var(--text-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.benefits-list li:last-child {
+  border-bottom: none;
+}
+
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.product-category {
+  background: rgba(138, 43, 226, 0.1);
+  border: 2px solid var(--primary-color);
+  border-radius: 12px;
+  padding: 25px;
+  text-align: center;
+  transition: transform 0.3s;
+}
+
+.product-category:hover {
+  transform: translateY(-5px);
+}
+
+.product-category h3 {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+  color: var(--primary-color);
+}
+
+.product-category p {
+  font-size: 1rem;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 768px) {
+  .about-page h1 {
+    font-size: 2rem;
+  }
+
+  .about-section {
+    padding: 20px;
+  }
+
+  .products-grid {
+    grid-template-columns: 1fr;
+  }
+}

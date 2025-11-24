@@ -1,0 +1,331 @@
+.payment-boleto-page {
+  min-height: 80vh;
+  padding: 40px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.payment-boleto-page .container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.boleto-card {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.boleto-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.boleto-header h1 {
+  font-size: 2.2rem;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.boleto-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  margin-bottom: 30px;
+}
+
+.info-section {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 20px;
+  border-left: 4px solid #667eea;
+}
+
+.info-section h3 {
+  font-size: 1.1rem;
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.info-section p {
+  margin: 5px 0;
+  color: #555;
+  line-height: 1.6;
+}
+
+.payment-details-box {
+  background: linear-gradient(135deg, #f6f8fb 0%, #e9ecf5 100%);
+  border-radius: 12px;
+  padding: 25px;
+  margin-bottom: 30px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #ddd;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: #666;
+  font-size: 1rem;
+}
+
+.detail-value {
+  font-weight: 700;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.due-date {
+  color: #f59e0b;
+  font-size: 1.2rem;
+}
+
+.barcode-section {
+  text-align: center;
+  margin: 30px 0;
+  padding: 25px;
+  background: white;
+  border: 2px dashed #667eea;
+  border-radius: 12px;
+}
+
+.barcode-section h3 {
+  font-size: 1.2rem;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.barcode-container {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+  background: white;
+}
+
+.digitable-line-section {
+  margin: 30px 0;
+}
+
+.digitable-line-section label {
+  display: block;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 10px;
+  font-size: 1.05rem;
+}
+
+.digitable-line-box {
+  display: flex;
+  gap: 10px;
+}
+
+.digitable-line-box input {
+  flex: 1;
+  padding: 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  color: #333;
+  font-size: 1rem;
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  background: #f8f8f8;
+  letter-spacing: 1px;
+}
+
+.digitable-line-box input:focus {
+  outline: none;
+  border-color: #667eea;
+  background: white;
+}
+
+.btn-copy {
+  padding: 16px 24px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  white-space: nowrap;
+}
+
+.btn-copy:hover {
+  background: #5568d3;
+  transform: translateY(-2px);
+}
+
+.btn-copy.copied {
+  background: #10b981;
+}
+
+.instructions-section {
+  background: #f0f4f8;
+  border-left: 4px solid #667eea;
+  padding: 20px 25px;
+  border-radius: 8px;
+  margin: 30px 0;
+}
+
+.instructions-section h3 {
+  font-size: 1.2rem;
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.instructions-list {
+  margin: 0;
+  padding-left: 20px;
+  list-style: disc;
+}
+
+.instructions-list li {
+  padding: 6px 0;
+  color: #555;
+  line-height: 1.6;
+}
+
+.boleto-actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 30px;
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-print,
+.btn-simulate {
+  flex: 1;
+  padding: 16px;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-primary {
+  background: #667eea;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #5568d3;
+  transform: translateY(-2px);
+}
+
+.btn-secondary {
+  background: #e5e7eb;
+  color: #333;
+}
+
+.btn-secondary:hover {
+  background: #d1d5db;
+}
+
+.btn-print {
+  background: #10b981;
+  color: white;
+}
+
+.btn-print:hover {
+  background: #059669;
+}
+
+.btn-simulate {
+  background: #f59e0b;
+  color: white;
+}
+
+.btn-simulate:hover {
+  background: #d97706;
+  transform: translateY(-2px);
+}
+
+.loading-spinner {
+  text-align: center;
+  padding: 60px 20px;
+  font-size: 1.5rem;
+  color: white;
+}
+
+.error-card {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+
+.error-card h2 {
+  color: #ef4444;
+  margin-bottom: 20px;
+}
+
+.error-card p {
+  color: #333;
+  margin-bottom: 30px;
+  font-size: 1.1rem;
+}
+
+/* Print Styles */
+@media print {
+  .payment-boleto-page {
+    background: white;
+    padding: 0;
+  }
+
+  .boleto-card {
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .boleto-info-grid,
+  .payment-details-box,
+  .barcode-section,
+  .digitable-line-section,
+  .instructions-section {
+    page-break-inside: avoid;
+  }
+}
+
+@media (max-width: 768px) {
+  .boleto-card {
+    padding: 25px;
+  }
+
+  .boleto-header h1 {
+    font-size: 1.8rem;
+  }
+
+  .boleto-info-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .boleto-actions {
+    flex-direction: column;
+  }
+
+  .digitable-line-box {
+    flex-direction: column;
+  }
+
+  .barcode-container svg {
+    max-width: 100%;
+    height: auto;
+  }
+}

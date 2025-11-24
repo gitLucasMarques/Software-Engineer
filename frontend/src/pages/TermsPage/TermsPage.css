@@ -1,0 +1,64 @@
+.terms-page {
+  padding: 40px 20px;
+  min-height: 70vh;
+}
+
+.terms-page .container {
+  max-width: 900px;
+}
+
+.terms-page h1 {
+  text-align: center;
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+  color: var(--text-color);
+}
+
+.last-update {
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 40px;
+}
+
+.terms-section {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 25px;
+  margin-bottom: 20px;
+}
+
+.terms-section h2 {
+  font-size: 1.5rem;
+  margin-bottom: 15px;
+  color: var(--primary-color);
+}
+
+.terms-section p {
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  margin-bottom: 15px;
+}
+
+.terms-section ul {
+  margin-left: 20px;
+  margin-bottom: 15px;
+}
+
+.terms-section li {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .terms-page h1 {
+    font-size: 2rem;
+  }
+
+  .terms-section {
+    padding: 20px;
+  }
+}

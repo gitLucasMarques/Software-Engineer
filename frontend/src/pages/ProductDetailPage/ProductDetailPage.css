@@ -1,0 +1,247 @@
+.product-detail-page {
+  padding: 40px 20px;
+  min-height: calc(100vh - 70px);
+  background-color: #f8f9fa;
+}
+
+.product-detail-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #1e3a8a;
+  text-decoration: none;
+  font-weight: 600;
+  margin-bottom: 30px;
+  transition: color 0.2s ease;
+}
+
+.back-button:hover {
+  color: #1e40af;
+}
+
+.product-detail-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  background: #ffffff;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.product-detail-image {
+  position: relative;
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #f3f4f6;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.product-detail-image img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.discount-badge-large {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background-color: #dc2626;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 1.2rem;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.product-detail-info h1 {
+  font-size: 2.5rem;
+  color: #111827;
+  margin-bottom: 16px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.product-meta {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.meta-label {
+  font-size: 0.85rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.meta-value {
+  font-size: 1rem;
+  color: #111827;
+  font-weight: 500;
+}
+
+.product-description {
+  margin-bottom: 32px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.product-description h2 {
+  font-size: 1.3rem;
+  color: #111827;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.product-description p {
+  color: #4b5563;
+  line-height: 1.8;
+  font-size: 1.05rem;
+}
+
+.product-price-section {
+  margin-bottom: 32px;
+  padding: 24px;
+  background-color: #f8f9fa;
+  border-radius: 12px;
+}
+
+.price-label {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.price-display {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.current-price-large {
+  font-size: 3rem;
+  color: #1e3a8a;
+  font-weight: 700;
+}
+
+.original-price-large {
+  font-size: 1.5rem;
+  color: #9ca3af;
+  text-decoration: line-through;
+}
+
+.savings-info {
+  color: #059669;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.stock-info {
+  margin-bottom: 24px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.stock-info.in-stock {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.stock-info.out-of-stock {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.product-actions {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.product-actions .btn {
+  flex: 1;
+  padding: 16px;
+  font-size: 1.1rem;
+}
+
+.btn-wishlist,
+.btn-wishlist-active {
+  flex: 0 0 60px;
+  padding: 16px;
+  font-size: 1.5rem;
+  border: 2px solid #e0e0e0;
+  background: white;
+  transition: all 0.3s;
+}
+
+.btn-wishlist:hover {
+  border-color: #ff4444;
+  transform: scale(1.1);
+}
+
+.btn-wishlist-active {
+  background: #ff4444;
+  border-color: #ff4444;
+  animation: heartbeat 0.5s ease;
+}
+
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+.product-platform-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+}
+
+.platform-badge {
+  padding: 8px 16px;
+  background-color: #e5e7eb;
+  color: #374151;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .product-detail-content {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    padding: 24px;
+  }
+
+  .product-detail-info h1 {
+    font-size: 2rem;
+  }
+
+  .current-price-large {
+    font-size: 2.2rem;
+  }
+
+  .product-actions {
+    flex-direction: column;
+  }
+}

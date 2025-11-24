@@ -1,0 +1,26 @@
+{
+  "name": "game-ecommerce",
+  "version": "1.0.0",
+  "description": "E-commerce completo de jogos digitais",
+  "scripts": {
+    "install:all": "npm install --prefix backend && npm install --prefix frontend",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm start",
+    "setup": "cd backend && npm run setup",
+    "test": "cd backend && npm test",
+    "build": "cd frontend && npm run build"
+  },
+  "keywords": [
+    "ecommerce",
+    "games",
+    "nodejs",
+    "react",
+    "mysql"
+  ],
+  "author": "Lucas Marques",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
