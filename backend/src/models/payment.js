@@ -1,4 +1,11 @@
 const mongoose = require('mongoose');
+/**
+ * Modelo de Pagamento (Payment) usando Mongoose.
+ * Armazena informações sobre o pagamento de um pedido,
+ * incluindo método utilizado, valor, status, usuário responsável
+ * e detalhes adicionais da transação. Cada pedido possui apenas
+ * um registro de pagamento. Utiliza timestamps automáticos.
+ */
 
 const paymentSchema = new mongoose.Schema({
     orderId: {

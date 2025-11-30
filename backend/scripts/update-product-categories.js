@@ -1,8 +1,14 @@
+// Importa o Mongoose para conectar ao MongoDB
 const mongoose = require('mongoose');
+
+// Importa os modelos de Produto e Categoria
 const Product = require('../src/models/product');
 const Category = require('../src/models/category');
+
+// Carrega variáveis de ambiente do arquivo .env
 require('dotenv').config();
 
+// Conecta ao banco MongoDB (usa variável de ambiente ou fallback local)
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/sw_store', {
   useNewUrlParser: true,
   useUnifiedTopology: true
@@ -12,15 +18,17 @@ async function updateProductCategories() {
   try {
     console.log('🔄 Atualizando categorias dos produtos...\n');
 
-    // Buscar todas as categorias (subcategorias apenas)
+    // Busca todas as categorias que NÃO são categorias principais (ou seja, subcategorias)
     const categories = await Category.find({ isMainCategory: false });
+
+    // Cria um mapa { nomeDaCategoria → idDaCategoria }
     const categoryMap = {};
-    
     categories.forEach(cat => {
       categoryMap[cat.name] = cat._id;
     });
 
-    // Mapear produtos por nome para suas categorias
+    // Mapeamento entre nome do produto e sua categoria correspondente
+    // (usado para atualizar o categoryId de cada produto)
     const productCategoryMapping = {
       // Ação e Aventura
       'The Witcher 3: Wild Hunt': 'Ação e Aventura',
@@ -138,38 +146,48 @@ async function updateProductCategories() {
       'HyperX Cloud Alpha Wireless': 'Headsets'
     };
 
-    let updated = 0;
-    let notFound = 0;
+    let updated = 0;   // Contador de quantos produtos tiveram categorias atualizadas
+    let notFound = 0;  // Contador de produtos que não foram encontrados no banco
 
+    // Percorre todos os produtos definidos no mapeamento
     for (const [productName, categoryName] of Object.entries(productCategoryMapping)) {
       const product = await Product.findOne({ name: productName });
-      
+
+      // Caso o produto exista…
       if (product) {
         const categoryId = categoryMap[categoryName];
-        
+
+        // Se a categoria correspondente existir, atualiza
         if (categoryId) {
           product.categoryId = categoryId;
           await product.save();
           console.log(`✓ ${productName} → ${categoryName}`);
           updated++;
         } else {
+          // Categoria não encontrada no banco
           console.log(`⚠ Categoria não encontrada: ${categoryName}`);
         }
       } else {
+        // Produto não está cadastrado
         console.log(`⚠ Produto não encontrado: ${productName}`);
         notFound++;
       }
     }
 
+    // Relatório final
     console.log(`\n✨ Atualização concluída!`);
     console.log(`   Produtos atualizados: ${updated}`);
     console.log(`   Produtos não encontrados: ${notFound}`);
     
+    // Finaliza o processo
     process.exit(0);
+
   } catch (error) {
+    // Caso ocorra erro geral
     console.error('❌ Erro:', error);
     process.exit(1);
   }
 }
 
+// Executa o script
 updateProductCategories();

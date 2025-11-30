@@ -1,4 +1,11 @@
 const mongoose = require('mongoose');
+/**
+ * Modelo de Pedido (Order) usando Mongoose.
+ * Representa um pedido feito por um usuário, contendo itens comprados,
+ * valor total, status do pedido, status do pagamento e informações completas
+ * de envio. Também armazena método de pagamento e observações.
+ * Utiliza timestamps para registrar criação e atualização automaticamente.
+ */
 
 const orderItemSchema = new mongoose.Schema({
     productId: {

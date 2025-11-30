@@ -1,3 +1,13 @@
+/**
+ * Rotas relacionadas a usuários.
+ * 
+ * Usuários logados podem atualizar ou deletar a própria conta.
+ * 
+ * Admins têm acesso a rotas extras para listar todos os usuários,
+ * ver detalhes, atualizar ou deletar qualquer conta.
+ * 
+ * Organiza quem pode fazer o quê com os dados dos usuários.
+ */
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');

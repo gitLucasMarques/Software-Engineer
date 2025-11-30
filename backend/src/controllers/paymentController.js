@@ -1,3 +1,15 @@
+/**
+ * Este módulo reúne os controladores responsáveis por iniciar e gerenciar pagamentos
+ * de diferentes meios — MercadoPago, PayPal, Pix, boleto e cartão.  
+ * Ele valida permissões do usuário, garante que o pedido exista, não esteja pago
+ * e pertença ao solicitante, e então delega aos serviços específicos a criação das
+ * transações.  
+ * Também lida com webhooks externos para confirmar pagamentos, registra ou atualiza
+ * dados de pagamento no banco, permite regenerar Pix/Boleto quando necessário
+ * e atualiza o status do pedido após a confirmação.  
+ * Em resumo: centraliza toda a orquestração de fluxo de pagamento e suas integrações.
+ */
+
 const { Order, Payment } = require('../models');
 const paymentService = require('../services/paymentService');
 const pixBoletoService = require('../services/pixBoletoService');
@@ -202,8 +214,6 @@ exports.getPaymentStatus = async (req, res) => {
     }
 };
 
-// ===== NOVOS MÉTODOS DE PAGAMENTO =====
-
 exports.createPixPayment = async (req, res) => {
     try {
         const { orderId } = req.body;
@@ -227,14 +237,12 @@ exports.createPixPayment = async (req, res) => {
             return res.status(400).json({ status: 'fail', message: 'Este pedido já foi pago.' });
         }
 
-        // Gerar código PIX
         const pixData = pixBoletoService.generatePixCode(
             order._id.toString(),
             order.totalAmount,
             order.userId.email
         );
 
-        // Buscar ou criar registro de pagamento (permite regenerar PIX)
         const payment = await Payment.findOneAndUpdate(
             { orderId: order._id },
             {
@@ -292,16 +300,13 @@ exports.createBoletoPayment = async (req, res) => {
             return res.status(400).json({ status: 'fail', message: 'Este pedido já foi pago.' });
         }
 
-        // Calcular data de vencimento (3 dias úteis)
         const dueDate = new Date();
         dueDate.setDate(dueDate.getDate() + 3);
 
-        // Formatar endereço do pagador como string
         const payerAddress = order.shippingAddress 
             ? `${order.shippingAddress.address}, ${order.shippingAddress.city} - ${order.shippingAddress.state}, CEP: ${order.shippingAddress.zipCode}`
             : 'Não informado';
 
-        // Gerar boleto
         const boletoData = pixBoletoService.generateBoleto(
             order._id.toString(),
             order.totalAmount,
@@ -313,7 +318,6 @@ exports.createBoletoPayment = async (req, res) => {
             }
         );
 
-        // Buscar ou criar registro de pagamento (permite regenerar boleto)
         const payment = await Payment.findOneAndUpdate(
             { orderId: order._id },
             {
@@ -379,7 +383,6 @@ exports.createCardPayment = async (req, res) => {
 
         let cardInfo = cardData;
 
-        // Se usar cartão salvo, buscar do banco
         if (cardId) {
             const PaymentCard = require('../models/paymentCard');
             const savedCard = await PaymentCard.findOne({ _id: cardId, userId: userId });
@@ -388,12 +391,11 @@ exports.createCardPayment = async (req, res) => {
                 return res.status(404).json({ status: 'fail', message: 'Cartão não encontrado.' });
             }
 
-            // Descriptografar dados do cartão
             cardInfo = {
                 cardNumber: savedCard.getDecryptedCardNumber(),
                 expiryMonth: savedCard.expiryMonth,
                 expiryYear: savedCard.expiryYear,
-                cvv: req.body.cvv // CVV sempre precisa ser fornecido
+                cvv: req.body.cvv
             };
 
             if (!cardInfo.cvv) {
@@ -401,7 +403,6 @@ exports.createCardPayment = async (req, res) => {
             }
         }
 
-        // Processar pagamento
         const paymentResult = await pixBoletoService.processCardPayment(
             cardInfo,
             order.totalAmount,
@@ -417,7 +418,6 @@ exports.createCardPayment = async (req, res) => {
             });
         }
 
-        // Buscar ou criar registro de pagamento
         const payment = await Payment.findOneAndUpdate(
             { orderId: order._id },
             {
@@ -438,7 +438,6 @@ exports.createCardPayment = async (req, res) => {
             { upsert: true, new: true, setDefaultsOnInsert: true }
         );
 
-        // Atualizar status do pedido
         order.paymentStatus = 'paid';
         order.status = 'processing';
         await order.save();
@@ -475,13 +474,11 @@ exports.simulatePaymentApproval = async (req, res) => {
             return res.status(403).json({ status: 'fail', message: 'Acesso negado a este pedido.' });
         }
 
-        // Atualizar payment para paid
         await Payment.findOneAndUpdate(
             { orderId: order._id },
             { status: 'paid' }
         );
 
-        // Atualizar order
         order.paymentStatus = 'paid';
         order.status = 'processing';
         await order.save();

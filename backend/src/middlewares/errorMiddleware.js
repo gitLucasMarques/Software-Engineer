@@ -1,5 +1,13 @@
 const errorMiddleware = (err, req, res, next) => {
     console.error('Error Stack:', err.stack);
+/**
+ * Middleware global de tratamento de erros.
+ * Ele captura qualquer erro lançado na aplicação e retorna respostas padronizadas.
+ * Trata especificamente erros do Sequelize (validação, duplicidade, FK, conexão),
+ * erros de JWT, erros de JSON malformado e erros operacionais customizados.
+ * Para erros desconhecidos, retorna uma resposta genérica de erro interno,
+ * exibindo detalhes adicionais apenas em ambiente de desenvolvimento.
+ */
 
     // Erro de validação do Sequelize
     if (err.name === 'SequelizeValidationError') {

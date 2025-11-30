@@ -1,21 +1,25 @@
 const { Review, Product, Order, OrderItem } = require('../models');
 
+// Criar avaliação
 exports.createReview = async (req, res) => {
     try {
         const { gameId } = req.params;
         const userId = req.user._id;
         const { rating, comment } = req.body;
 
+        // Verifica se o jogo existe
         const product = await Product.findById(gameId);
         if (!product) {
             return res.status(404).json({ status: 'fail', message: 'Jogo não encontrado.' });
         }
 
+        // Impede avaliações duplicadas
         const existingReview = await Review.findOne({ userId, gameId });
         if (existingReview) {
             return res.status(400).json({ status: 'fail', message: 'Você já avaliou este jogo.' });
         }
 
+        // Verifica se o usuário comprou o jogo
         const hasPurchased = await Order.findOne({
             userId,
             paymentStatus: 'paid'
@@ -28,6 +32,7 @@ exports.createReview = async (req, res) => {
             return res.status(403).json({ status: 'fail', message: 'Você deve comprar o jogo para poder avaliá-lo.' });
         }
 
+        // Cria a avaliação
         const newReview = await Review.create({
             rating,
             comment,
@@ -42,6 +47,7 @@ exports.createReview = async (req, res) => {
             }
         });
     } catch (error) {
+        // Captura erros de validação
         if (error.name === 'ValidationError') {
             const messages = Object.values(error.errors).map(err => err.message);
             return res.status(400).json({ status: 'fail', message: messages });
@@ -53,6 +59,7 @@ exports.createReview = async (req, res) => {
     }
 };
 
+// Buscar avaliações de um jogo
 exports.getReviewsForGame = async (req, res) => {
     try {
         const { gameId } = req.params;
@@ -61,9 +68,7 @@ exports.getReviewsForGame = async (req, res) => {
         res.status(200).json({
             status: 'success',
             results: reviews.length,
-            data: {
-                reviews
-            }
+            data: { reviews }
         });
     } catch (error) {
         res.status(500).json({
@@ -73,6 +78,7 @@ exports.getReviewsForGame = async (req, res) => {
     }
 };
 
+// Atualizar uma avaliação existente
 exports.updateReview = async (req, res) => {
     try {
         const { id } = req.params;
@@ -85,10 +91,12 @@ exports.updateReview = async (req, res) => {
             return res.status(404).json({ status: 'fail', message: 'Avaliação não encontrada.' });
         }
 
+        // Permite editar apenas o dono da avaliação
         if (review.userId.toString() !== userId.toString()) {
             return res.status(403).json({ status: 'fail', message: 'Você não tem permissão para editar esta avaliação.' });
         }
 
+        // Atualiza apenas campos enviados
         review.rating = rating ?? review.rating;
         review.comment = comment ?? review.comment;
 
@@ -96,9 +104,7 @@ exports.updateReview = async (req, res) => {
 
         res.status(200).json({
             status: 'success',
-            data: {
-                review
-            }
+            data: { review }
         });
     } catch (error) {
         if (error.name === 'ValidationError') {
@@ -112,6 +118,7 @@ exports.updateReview = async (req, res) => {
     }
 };
 
+// Deletar avaliação
 exports.deleteReview = async (req, res) => {
     try {
         const { id } = req.params;
@@ -123,6 +130,7 @@ exports.deleteReview = async (req, res) => {
             return res.status(404).json({ status: 'fail', message: 'Avaliação não encontrada.' });
         }
 
+        // Apenas autor ou admin pode deletar
         if (review.userId.toString() !== user._id.toString() && user.role !== 'admin') {
             return res.status(403).json({ status: 'fail', message: 'Você não tem permissão para deletar esta avaliação.' });
         }
