@@ -1,10 +1,14 @@
 // Script para adicionar produtos de consoles ao banco de dados
+// Este script funciona como um "seed", populando o banco de dados com produtos pré-definidos.
+// Ele conecta ao MongoDB, verifica categorias existentes, evita duplicações e insere novos produtos.
 
 const mongoose = require('mongoose');
 const Product = require('../src/models/product');
 const Category = require('../src/models/category');
 require('dotenv').config();
 
+// Lista de produtos que serão inseridos no banco.
+// Cada item inclui informações como nome, descrição, preço, imagem, categoria, estoque e status.
 const consoleProducts = [
   // Controles
   {
@@ -134,14 +138,17 @@ const consoleProducts = [
 
 async function addConsoleProducts() {
   try {
+    // Conecta ao banco de dados MongoDB usando a URI definida no ambiente.
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/sw-ecommerce');
     console.log('✅ Conectado ao MongoDB');
 
-    // Buscar IDs das categorias
+    // Busca no banco as categorias usadas pelos produtos.
+    // Isso permite relacionar cada produto ao ID correto da sua categoria.
     const categories = await Category.find({
       name: { $in: ['Controles', 'PlayStation', 'Xbox', 'Nintendo'] }
     });
 
+    // Cria um mapa que relaciona nomes de categorias aos seus respectivos IDs no banco.
     const categoryMap = {};
     categories.forEach(cat => {
       categoryMap[cat.name] = cat._id;
@@ -149,20 +156,22 @@ async function addConsoleProducts() {
 
     console.log('\n📦 Categorias encontradas:', Object.keys(categoryMap));
 
-    // Adicionar produtos
+    // Contadores para produtos adicionados e ignorados.
     let addedCount = 0;
     let skippedCount = 0;
 
+    // Para cada produto da lista, verifica categoria, evita duplicatas e insere no banco.
     for (const productData of consoleProducts) {
       const categoryId = categoryMap[productData.category];
       
+      // Se a categoria não existir no banco, o produto é ignorado.
+      console.log(`❌ Categoria não encontrada: ${productData.category}`);
       if (!categoryId) {
-        console.log(`❌ Categoria não encontrada: ${productData.category}`);
         skippedCount++;
         continue;
       }
 
-      // Verificar se produto já existe
+      // Verifica se já existe um produto com o mesmo nome (evita duplicação).
       const exists = await Product.findOne({ name: productData.name });
       
       if (exists) {
@@ -171,7 +180,7 @@ async function addConsoleProducts() {
         continue;
       }
 
-      // Criar produto
+      // Insere o produto no banco, vinculando ao ID da categoria.
       await Product.create({
         ...productData,
         categoryId: categoryId
@@ -181,23 +190,27 @@ async function addConsoleProducts() {
       addedCount++;
     }
 
+    // Exibe um resumo final da operação.
     console.log('\n📊 Resumo:');
     console.log(`✅ Produtos adicionados: ${addedCount}`);
     console.log(`⏭️  Produtos pulados: ${skippedCount}`);
     console.log(`📦 Total de produtos tentados: ${consoleProducts.length}`);
 
-    // Mostrar total de produtos no banco
+    // Mostra quantos produtos existem no banco após a operação.
     const totalProducts = await Product.countDocuments();
     console.log(`\n🎮 Total de produtos no banco de dados: ${totalProducts}`);
 
+    // Finaliza a conexão com o banco.
     await mongoose.disconnect();
     console.log('\n✅ Desconectado do MongoDB');
     process.exit(0);
 
   } catch (error) {
+    // Caso ocorra algum erro, ele é exibido e o processo termina com falha.
     console.error('❌ Erro:', error);
     process.exit(1);
   }
 }
 
+// Executa o script ao ser chamado.
 addConsoleProducts();
