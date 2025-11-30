@@ -1,10 +1,4 @@
 const mongoose = require('mongoose');
-/**
- * Modelo de Carrinho de Compras usando Mongoose.
- * Cada carrinho pertence a um único usuário (userId) e contém uma lista de itens.
- * Cada item possui um productId referenciando um produto e uma quantidade mínima de 1.
- * O schema também utiliza timestamps para registrar criação e atualização.
- */
 
 const cartItemSchema = new mongoose.Schema({
     productId: {

@@ -1,17 +1,3 @@
-/**
- * Rotas relacionadas a pagamentos.
- * 
- * Alguns webhooks de pagamento (MercadoPago e PayPal) não precisam de login,
- * porque vêm direto do gateway.
- * 
- * Todas as outras rotas exigem que o usuário esteja logado e permitem:
- *  - Criar pagamentos (cartão, PIX, boleto, PayPal, MercadoPago)
- *  - Simular aprovação de pagamento
- *  - Consultar status de um pagamento
- * 
- * Basicamente, organiza tudo que envolve processar e acompanhar pagamentos.
- */
-
 const express = require('express');
 const router = express.Router();
 const paymentController = require('../controllers/paymentController');

@@ -1,14 +1,3 @@
-/**
- * Aqui ficam todas as rotas de pedidos (orders).
- * 
- * Todas as rotas precisam que o usuário esteja logado.
- * Usuários podem criar pedidos, ver seus pedidos, consultar um pedido específico
- * e cancelar pedidos.
- * 
- * Apenas admins conseguem mudar o status de um pedido.
- * 
- * Serve para organizar e proteger quem pode fazer o quê nos pedidos.
- */
 const express = require('express');
 const router = express.Router();
 const orderController = require('../controllers/orderController');

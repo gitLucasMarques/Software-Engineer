@@ -1,25 +1,3 @@
-/**
- * Serviço de redefinição de senha.
- * 
- * Responsável por:
- *  - Gerar tokens de recuperação de senha.
- *  - Salvar tokens no banco com validade e status de uso.
- *  - Enviar emails de recuperação usando o EmailService.
- *  - Validar tokens (verificar se existem, não usados e não expirados).
- *  - Resetar a senha do usuário e marcar o token como usado.
- *  - Enviar email de confirmação após a alteração da senha.
- * 
- * Observações:
- *  - Por segurança, não é revelado se o email realmente existe ao enviar link de recuperação.
- *  - O hash da nova senha é feito pelo hook do model User.
- *  - Todos os erros são logados no console para debug.
- * 
- * Uso:
- * const passwordResetService = require('./services/passwordResetService');
- * passwordResetService.sendResetEmail(email);
- * passwordResetService.resetPassword(token, novaSenha);
- * passwordResetService.validateToken(token);
- */
 const { User, PasswordReset } = require('../models');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');

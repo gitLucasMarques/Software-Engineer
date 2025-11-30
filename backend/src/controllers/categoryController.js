@@ -1,11 +1,3 @@
-/**
- * Este módulo gerencia todas as operações relacionadas às categorias do sistema.
- * Ele fornece endpoints para listar categorias (principais ou gerais), buscar
- * subcategorias de uma categoria específica, obter uma categoria pelo ID,
- * criar novas categorias, atualizá-las e removê-las. Também cuida da geração do
- * slug baseado no nome e trata erros como duplicidade e categorias inexistentes.
- */
-
 const { Category } = require('../models');
 const slugify = require('../utils/slugify');
 

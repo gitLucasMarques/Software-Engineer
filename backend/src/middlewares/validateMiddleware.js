@@ -1,13 +1,4 @@
 const { validationResult } = require('express-validator');
-/**
- * Middleware de validação que utiliza schemas (ex: Joi) para validar
- * o corpo da requisição, parâmetros e query strings.
- * Cada função (validateRequest, validateParams, validateQuery) executa
- * a validação correspondente e retorna erros detalhados caso os dados
- * estejam inválidos.
- * No final, também exporta um middleware que lida com validações
- * vindas do express-validator, retornando erro 400 se houver inconsistências.
- */
 
 const validateRequest = (schema) => {
     return (req, res, next) => {

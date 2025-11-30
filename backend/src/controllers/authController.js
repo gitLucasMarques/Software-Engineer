@@ -1,11 +1,3 @@
-/**
- * Controlador de autenticação responsável por lidar com registro, login,
- * recuperação dos dados do usuário autenticado e atualização de informações
- * pessoais e de senha. Ele valida dados recebidos, garante segurança ao
- * ocultar informações sensíveis, gera tokens JWT para autenticação e aciona
- * serviços auxiliares como envio de e-mail durante o registro.
- */
-
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const environment = require('../config/environment');
@@ -51,6 +43,7 @@ exports.register = async (req, res) => {
             address
         });
 
+        // Envia email de boas-vindas (não aguarda para não bloquear a resposta)
         emailService.sendWelcomeEmail(newUser).catch(err => 
             console.error('Erro ao enviar email de boas-vindas:', err)
         );
@@ -129,6 +122,7 @@ exports.updateMe = async (req, res) => {
         const { name, phone, address } = req.body;
         const userId = req.user._id;
 
+        // Não permitir atualização de email e password por esta rota
         if (req.body.email || req.body.password || req.body.role) {
             return res.status(400).json({
                 status: 'fail',

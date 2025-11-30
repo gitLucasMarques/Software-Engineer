@@ -1,14 +1,3 @@
-/**
- * Rotas relacionadas a produtos.
- * 
- * Todo mundo pode ver a lista de produtos e detalhes de um produto específico.
- * 
- * As rotas de criar, atualizar ou deletar produtos são só para admins,
- * e exigem que o usuário esteja logado.
- * 
- * Organiza tudo que envolve produtos e controla quem pode mexer em cada coisa.
- */
-
 const express = require('express');
 const router = express.Router();
 const productController = require('../controllers/productController');

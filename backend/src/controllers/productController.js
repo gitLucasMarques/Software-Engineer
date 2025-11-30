@@ -1,15 +1,3 @@
-/**
- * Este controlador gerencia todas as operações relacionadas aos jogos/produtos.
- * Ele fornece rotas para listagem com filtros e paginação, consulta detalhada
- * com avaliações, criação, edição e exclusão de produtos.
- *
- * A listagem permite filtrar por categoria, plataforma e busca textual, além
- * de suportar paginação e ordenação dinâmica. A consulta por ID retorna o jogo
- * completo junto com suas reviews. As operações de criação e atualização
- * validam os dados conforme o schema Mongoose. A exclusão remove o jogo
- * permanentemente do banco.
- */
-
 const { Product, Review, User } = require('../models');
 
 exports.getAllProducts = async (req, res) => {
@@ -20,10 +8,18 @@ exports.getAllProducts = async (req, res) => {
         const skip = (page - 1) * limit;
 
         let query = { isActive: true };
-        if (search) query.name = { $regex: search, $options: 'i' };
-        if (category) query.genre = category;
-        if (categoryId) query.categoryId = categoryId;
-        if (platform) query.platform = { $regex: platform, $options: 'i' };
+        if (search) {
+            query.name = { $regex: search, $options: 'i' };
+        }
+        if (category) {
+            query.genre = category;
+        }
+        if (categoryId) {
+            query.categoryId = categoryId;
+        }
+        if (platform) {
+            query.platform = { $regex: platform, $options: 'i' };
+        }
 
         let sortOrder = { createdAt: -1 };
         if (sort) {
@@ -45,12 +41,16 @@ exports.getAllProducts = async (req, res) => {
             total: count,
             totalPages: Math.ceil(count / limit),
             currentPage: page,
-            data: { products }
+            data: {
+                products
+            }
         });
-
     } catch (error) {
         console.error('Erro em getAllProducts:', error);
-        res.status(500).json({ status: 'error', message: 'Erro ao buscar os jogos.' });
+        res.status(500).json({
+            status: 'error',
+            message: 'Erro ao buscar os jogos.'
+        });
     }
 };
 
@@ -67,7 +67,9 @@ exports.getProductById = async (req, res) => {
             });
         }
 
-        const reviews = await Review.find({ gameId: id }).populate('userId', 'name');
+        // Buscar reviews do produto
+        const reviews = await Review.find({ gameId: id })
+            .populate('userId', 'name');
 
         res.status(200).json({
             status: 'success',
@@ -92,7 +94,9 @@ exports.createProduct = async (req, res) => {
         const newProduct = await Product.create(req.body);
         res.status(201).json({
             status: 'success',
-            data: { product: newProduct }
+            data: {
+                product: newProduct
+            }
         });
     } catch (error) {
         if (error.name === 'ValidationError') {
@@ -123,7 +127,9 @@ exports.updateProduct = async (req, res) => {
 
         res.status(200).json({
             status: 'success',
-            data: { product }
+            data: {
+                product
+            }
         });
     } catch (error) {
         if (error.name === 'ValidationError') {

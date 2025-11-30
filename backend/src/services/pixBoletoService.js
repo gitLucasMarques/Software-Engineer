@@ -16,26 +16,6 @@ exports.generatePixCode = (orderId, amount, userEmail) => {
     pixKey: process.env.PIX_KEY || '+5511999999999',
     timestamp: new Date().toISOString()
   };
-/**
- * Serviço de pagamentos simulado.
- * 
- * Responsável por:
- *  - Gerar código PIX (QR Code) para pagamentos.
- *  - Gerar boletos com linha digitável e código de barras.
- *  - Processar pagamentos com cartão de crédito/débito de forma simulada.
- * 
- * Observações:
- *  - Todos os métodos são simulados para ambiente de teste.
- *  - Em produção, você precisaria integrar com gateways reais (PIX, boleto, cartão, etc).
- *  - Funções auxiliares cuidam de geração de CRC, datas, dígitos, autenticação e detecção de bandeira de cartão.
- *  - Pagamentos com cartão simulam aprovação se os últimos 4 dígitos não forem '0000'.
- * 
- * Uso:
- * const paymentService = require('./services/paymentService');
- * const pix = paymentService.generatePixCode(orderId, amount, userEmail);
- * const boleto = paymentService.generateBoleto(orderId, amount, dueDate, userInfo);
- * const cardPayment = await paymentService.processCardPayment(cardData, amount, installments, userId, orderId);
- */
 
   // Gerar código PIX (formato EMV - em produção use biblioteca específica)
   const pixCode = generateEMVCode(pixData);

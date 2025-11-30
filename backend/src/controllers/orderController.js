@@ -1,16 +1,3 @@
-/**
- * Este módulo implementa toda a lógica relacionada aos pedidos do usuário.
- * Ele cobre: criação de pedidos a partir do carrinho, consulta dos pedidos
- * do usuário, acesso a um pedido específico (com regras de permissão),
- * atualização de status pelo administrador e cancelamento.
- *
- * A criação do pedido envolve validações, cálculo de total, reserva de estoque,
- * geração dos itens do pedido, limpeza do carrinho e envio de e-mail ao cliente.
- * As consultas retornam pedidos com informações populadas de produtos e usuário.
- * A atualização de status notifica o cliente por e-mail. O cancelamento inclui
- * liberação de estoque e solicitação de reembolso.
- */
-
 const { Order, OrderItem, Cart, Product, User } = require('../models');
 const { stockService, emailService } = require('../services');
 
@@ -29,11 +16,13 @@ exports.createOrder = async (req, res) => {
             return res.status(400).json({ status: 'fail', message: 'Seu carrinho está vazio.' });
         }
 
+        // Preparar itens para reserva de estoque
         const itemsToReserve = cart.items.map(item => ({
             productId: item.productId._id,
             quantity: item.quantity
         }));
 
+        // Reservar estoque para todos os produtos de uma vez
         await stockService.reserveMultipleProducts(itemsToReserve);
 
         let total = 0;
@@ -57,9 +46,11 @@ exports.createOrder = async (req, res) => {
             items: orderItems
         });
 
+        // Limpar carrinho
         cart.items = [];
         await cart.save();
 
+        // Enviar email de confirmação
         await emailService.sendOrderConfirmation(req.user, order);
 
         res.status(201).json({
@@ -150,6 +141,7 @@ exports.updateOrderStatus = async (req, res) => {
             return res.status(404).json({ status: 'fail', message: 'Pedido não encontrado.' });
         }
 
+        // Enviar email de atualização de status
         await emailService.sendOrderStatusUpdate(order.userId, order);
 
         res.status(200).json({

@@ -1,12 +1,3 @@
-/**
- * Este módulo contém todos os controladores relacionados ao carrinho de compras.
- * Ele permite ao usuário buscar seu carrinho, adicionar produtos, atualizar quantidades,
- * remover itens específicos e limpar todo o carrinho. Todas as operações verificam
- * a disponibilidade do produto, garantem que apenas itens ativos sejam retornados
- * e sempre populam os dados dos produtos antes de enviar a resposta. Também aplica
- * validações básicas como quantidade mínima e estoque disponível.
- */
-
 const { Cart, Product } = require('../models');
 
 exports.getCart = async (req, res) => {

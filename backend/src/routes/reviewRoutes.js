@@ -1,12 +1,3 @@
-/**
- * Rotas de avaliações de jogos.
- * 
- * Todo mundo pode ver as avaliações de um jogo.
- * 
- * Para criar, atualizar ou deletar uma avaliação, o usuário precisa estar logado.
- * 
- * Organiza e protege quem pode fazer o quê com as avaliações.
- */
 const express = require('express');
 const router = express.Router();
 const reviewController = require('../controllers/reviewController');
