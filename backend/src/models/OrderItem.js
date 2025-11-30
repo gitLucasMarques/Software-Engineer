@@ -1,10 +1,4 @@
 const mongoose = require('mongoose');
-/**
- * Modelo OrderItem usando Mongoose.
- * Representa um item individual dentro de um pedido,
- * armazenando o ID do pedido, o produto, a quantidade e o preço no momento da compra.
- * Inclui timestamps para registrar criação e atualização de cada item.
- */
 
 const orderItemSchema = new mongoose.Schema({
   orderId: {

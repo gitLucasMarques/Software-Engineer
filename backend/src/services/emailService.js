@@ -1,26 +1,5 @@
 const nodemailer = require('nodemailer');
 const environment = require('../config/environment');
-/**
- * Serviço de envio de emails da plataforma Voxel.
- * 
- * Configura o transporter usando nodemailer e variáveis de ambiente.
- * Oferece métodos para enviar diferentes tipos de emails:
- *  - Boas-vindas ao usuário
- *  - Confirmação de pedidos
- *  - Confirmação de pagamento
- *  - Redefinição de senha
- *  - Confirmação de alteração de senha
- *  - Atualização de status do pedido
- *  - Envio de nota fiscal
- * 
- * Cada método monta um HTML estilizado com informações específicas do usuário ou pedido.
- * Há também métodos auxiliares para traduzir status e métodos de pagamento em texto legível.
- * Logs no console ajudam a monitorar envios e erros.
- * 
- * Uso:
- * const emailService = require('./services/emailService');
- * emailService.sendWelcomeEmail(user);
- */
 
 class EmailService {
     constructor() {

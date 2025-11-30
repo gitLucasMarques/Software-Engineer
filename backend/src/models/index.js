@@ -7,11 +7,6 @@ const { Cart } = require('./cart');
 const Review = require('./review');
 const Payment = require('./payment');
 const PasswordReset = require('./PasswordReset');
-/**
- * Arquivo responsável por centralizar e exportar todos os modelos Mongoose da aplicação.
- * Facilita a importação dos modelos em outros módulos, agrupando:
- * User, Product, Category, Order, OrderItem, Cart, Review, Payment e PasswordReset.
- */
 
 module.exports = {
   User,

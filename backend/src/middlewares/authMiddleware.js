@@ -1,16 +1,6 @@
 const jwt = require('jsonwebtoken');
 const { User } = require('../models');
 const environment = require('../config/environment');
-/**
- * Middleware de autenticação responsável por validar o token JWT enviado pelo cliente.
- * Ele realiza:
- * - Extração do token do header Authorization.
- * - Verificação e decodificação do token usando o segredo JWT.
- * - Busca do usuário no banco, garantindo que exista e esteja ativo.
- * - Anexação do usuário autenticado ao objeto `req` para uso nas próximas rotas.
- * - Tratamento de erros como token inválido ou expirado.
- * Caso algo falhe, a requisição é bloqueada com o status HTTP apropriado.
- */
 
 const authMiddleware = async (req, res, next) => {
     try {

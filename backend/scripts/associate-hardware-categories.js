@@ -1,17 +1,10 @@
-// Importa o mongoose para conectar ao MongoDB
 const mongoose = require('mongoose');
-
-// Importa os modelos Product e Category
 const Product = require('../src/models/product');
 const Category = require('../src/models/category');
-
-// Carrega variáveis do arquivo .env (como MONGODB_URI)
 require('dotenv').config();
 
-// Conecta ao MongoDB usando a URI do .env ou fallback local
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/game_ecommerce');
 
-// Mapeamento entre nomes de produtos e a categoria correspondente
 const categoryMapping = {
   // Componentes
   'NVIDIA GeForce RTX 4090': 'Placas de Vídeo',
@@ -54,27 +47,22 @@ const categoryMapping = {
   'HyperX Cloud Alpha Wireless': 'Headsets'
 };
 
-// Função principal para associar produtos às respectivas categorias
 async function associateCategories() {
   try {
     console.log('🔗 Associando produtos de hardware às categorias...\n');
 
-    let updated = 0;   // Contador de produtos atualizados
-    let notFound = 0;  // Contador de falhas
+    let updated = 0;
+    let notFound = 0;
 
-    // Percorre todo o objeto categoryMapping
     for (const [productName, categoryName] of Object.entries(categoryMapping)) {
-      
-      // Busca o produto pelo nome
       const product = await Product.findOne({ name: productName });
       
       if (!product) {
         console.log(`❌ Produto não encontrado: ${productName}`);
         notFound++;
-        continue; // pula para o próximo item
+        continue;
       }
 
-      // Busca a categoria correspondente
       const category = await Category.findOne({ name: categoryName, isActive: true });
       
       if (!category) {
@@ -83,31 +71,23 @@ async function associateCategories() {
         continue;
       }
 
-      // Atribui a categoria ao produto
       product.categoryId = category._id;
-
-      // Salva também o nome da categoria no campo "genre"
-      product.genre = categoryName; // usado para busca/filtro
-      
-      // Salva as mudanças no banco
+      product.genre = categoryName; // Para busca/filtro
       await product.save();
       
       console.log(`✅ ${productName} → ${categoryName}`);
       updated++;
     }
 
-    // Resumo final
     console.log(`\n✨ Associação concluída!`);
     console.log(`   Atualizados: ${updated} produtos`);
     console.log(`   Não encontrados: ${notFound}`);
     
-    process.exit(0); // Encerra o script com sucesso
+    process.exit(0);
   } catch (error) {
-    // Caso dê algum erro inesperado
     console.error('❌ Erro:', error);
-    process.exit(1); // Encerra o script com código de erro
+    process.exit(1);
   }
 }
 
-// Executa a função
 associateCategories();

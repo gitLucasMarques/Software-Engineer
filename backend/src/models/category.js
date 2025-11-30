@@ -1,11 +1,4 @@
 const mongoose = require('mongoose');
-/**
- * Modelo de Categoria usando Mongoose.
- * Representa categorias de produtos/jogos, podendo ser categorias principais
- * ou subcategorias (via parentCategory).
- * Inclui nome, descrição, slug, controle de ativação e suporte a hierarquia.
- * Timestamps registram criação e atualização automaticamente.
- */
 
 const categorySchema = new mongoose.Schema({
   name: {

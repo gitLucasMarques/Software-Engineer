@@ -1,27 +1,21 @@
-// Importa o Mongoose para conectar ao MongoDB e os modelos do banco
 const mongoose = require('mongoose');
 const Product = require('../src/models/product');
 const Category = require('../src/models/category');
 
-// Conecta ao banco de dados MongoDB
 mongoose.connect('mongodb://localhost:27017/game_ecommerce')
   .then(async () => {
     console.log('Conectado ao MongoDB');
 
-    // Busca no banco todas as categorias que serão usadas para associar aos produtos
-    // Isso permite mapear o nome da categoria para o ID correto no banco
+    // Buscar categorias
     const categories = await Category.find({
       name: { $in: ['Placas de Vídeo', 'Processadores', 'Memória RAM', 'Armazenamento', 'Placas-Mãe', 'Fontes', 'Gabinetes', 'Mouses', 'Teclados', 'Headsets', 'Monitores', 'Cadeiras'] }
     });
 
-    // Cria um mapa onde cada nome de categoria aponta para seu respectivo _id
     const categoryMap = {};
     categories.forEach(cat => {
       categoryMap[cat.name] = cat._id;
     });
 
-    // Lista de novos produtos a serem inseridos no banco
-    // Cada produto já vem com categoryId preenchido com base no categoryMap
     const newProducts = [
       // Mais Placas de Vídeo
       {
@@ -345,8 +339,7 @@ mongoose.connect('mongodb://localhost:27017/game_ecommerce')
       }
     ];
 
-    // Loop que tenta inserir cada produto no banco
-    // Antes verifica se a categoria existe e se o produto já está cadastrado
+    // Inserir produtos
     let added = 0;
     for (const productData of newProducts) {
       if (!productData.categoryId) {
@@ -354,14 +347,12 @@ mongoose.connect('mongodb://localhost:27017/game_ecommerce')
         continue;
       }
 
-      // Evita duplicações verificando se o produto já existe pelo nome
       const existing = await Product.findOne({ name: productData.name });
       if (existing) {
         console.log(`Produto já existe: ${productData.name}`);
         continue;
       }
 
-      // Insere o produto no banco
       await Product.create(productData);
       console.log(`✅ Adicionado: ${productData.name}`);
       added++;
@@ -369,7 +360,7 @@ mongoose.connect('mongodb://localhost:27017/game_ecommerce')
 
     console.log(`\n✅ Processo concluído! ${added} produtos adicionados.`);
     
-    // Mostra um resumo de quantos produtos existem em cada categoria no banco
+    // Resumo por categoria
     console.log('\n📊 Resumo de produtos por categoria:');
     for (const [catName, catId] of Object.entries(categoryMap)) {
       const count = await Product.countDocuments({ categoryId: catId });

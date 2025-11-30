@@ -1,15 +1,4 @@
 const User = require('../models/user');
-/**
- * Este controlador gerencia operações relacionadas a usuários no sistema.
- * Ele permite:
- * - Buscar todos os usuários (sem o campo de senha).
- * - Buscar um usuário específico pelo ID.
- * - Atualizar os próprios dados do usuário autenticado (exceto senha).
- * - Deletar a própria conta.
- * - Atualizar qualquer usuário (rota administrativa).
- * - Deletar qualquer usuário (rota administrativa).
- * Todas as operações usam Mongoose e retornam respostas padronizadas em JSON.
- */
 
 exports.getAllUsers = async (req, res) => {
     try {

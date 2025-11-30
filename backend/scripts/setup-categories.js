@@ -1,15 +1,14 @@
 const mongoose = require('mongoose');
 const Category = require('../src/models/category');
 const Product = require('../src/models/product');
-require('dotenv').config(); // Carrega variáveis de ambiente do arquivo .env
+require('dotenv').config();
 
-// Conexão com o MongoDB, usando URI do .env ou fallback para banco local "sw_store"
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/sw_store', {
   useNewUrlParser: true,
   useUnifiedTopology: true
 });
 
-// Estrutura hierárquica de categorias principais e suas subcategorias
+// Estrutura hierárquica de categorias
 const categoriesStructure = {
   'Jogos': {
     description: 'Todos os jogos disponíveis',
@@ -62,16 +61,15 @@ async function setupCategories() {
   try {
     console.log('🏗️  Configurando estrutura de categorias...\n');
 
-    // Remove todas as categorias existentes antes de recriar a nova estrutura
+    // Limpar categorias antigas
     await Category.deleteMany({});
     console.log('✅ Categorias antigas removidas\n');
 
-    const categoryMap = {}; // Armazena IDs das categorias criadas
+    const categoryMap = {};
 
-    // Criação das categorias principais e suas subcategorias
+    // Criar categorias principais e subcategorias
     for (const [mainCatName, mainCatData] of Object.entries(categoriesStructure)) {
-
-      // Cria categoria principal
+      // Criar categoria principal
       const mainCategory = await Category.create({
         name: mainCatName,
         description: mainCatData.description,
@@ -84,7 +82,7 @@ async function setupCategories() {
       console.log(`✅ Categoria principal criada: ${mainCatName}`);
       categoryMap[mainCatName] = mainCategory._id;
 
-      // Cria cada subcategoria dentro da categoria principal
+      // Criar subcategorias
       for (const subCat of mainCatData.subcategories) {
         const subCategory = await Category.create({
           name: subCat.name,
@@ -98,13 +96,12 @@ async function setupCategories() {
         console.log(`  ↳ Subcategoria criada: ${subCat.name}`);
         categoryMap[subCat.name] = subCategory._id;
       }
-
       console.log('');
     }
 
     console.log('📦 Atualizando produtos existentes...\n');
 
-    // Mapeamento das categorias antigas para as novas subcategorias
+    // Mapear categorias antigas para novas estruturas
     const categoryMapping = {
       'Ação e Aventura': 'Ação e Aventura',
       'FPS e Shooter': 'FPS e Shooter',
@@ -125,12 +122,12 @@ async function setupCategories() {
       'Hardware - Periféricos': 'Acessórios'
     };
 
-    // Busca todos os produtos existentes para atualizar suas categorias
+    // Atualizar produtos
     const products = await Product.find();
     let updated = 0;
     
     for (const product of products) {
-      // Se o produto já tem categoria associada
+      // Buscar a categoria antiga do produto
       if (product.categoryId) {
         const oldCategory = await Category.findById(product.categoryId);
         
@@ -138,7 +135,6 @@ async function setupCategories() {
           const oldCategoryName = oldCategory.name;
           const newCategoryName = categoryMapping[oldCategoryName];
           
-          // Se existe um mapeamento para a nova categoria
           if (newCategoryName && categoryMap[newCategoryName]) {
             product.categoryId = categoryMap[newCategoryName];
             await product.save();
@@ -149,7 +145,6 @@ async function setupCategories() {
       }
     }
 
-    // Resumo final
     console.log(`\n✨ Setup concluído!`);
     console.log(`   Categorias principais: 4`);
     console.log(`   Subcategorias: ${Object.keys(categoryMap).length - 4}`);
@@ -162,4 +157,4 @@ async function setupCategories() {
   }
 }
 
-setupCategories(); // Executa toda a configuração
+setupCategories();

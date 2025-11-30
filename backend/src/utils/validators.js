@@ -2,20 +2,6 @@ const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
 };
-/**
- * Validators: conjunto de funções para validação de dados comuns.
- * 
- * - validateEmail(email): verifica se o email tem formato válido.
- * - validatePassword(password): verifica se a senha tem pelo menos 8 caracteres,
- *   com pelo menos uma letra maiúscula, uma minúscula e um número.
- * - validatePhone(phone): valida números de telefone no formato brasileiro.
- * - validateCPF(cpf): valida CPFs brasileiros com cálculo de dígitos verificadores.
- * - sanitizeString(str): remove espaços em excesso e caracteres potencialmente perigosos (< e >).
- * 
- * Exemplo de uso:
- * const { validateEmail, validatePassword } = require('./validators');
- * if (!validateEmail(user.email)) throw new Error('Email inválido');
- */
 
 const validatePassword = (password) => {
     // Mínimo 8 caracteres, pelo menos uma letra maiúscula, uma minúscula e um número

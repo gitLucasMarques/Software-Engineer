@@ -1,81 +1,76 @@
 const mongoose = require('mongoose');
 
-// Estrutura principal do produto no banco.
-// Este schema representa itens de uma loja, com suporte a categoria,
-// preço, estoque e até configurações de destaque e slug.
 const productSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: true,              // Nome é obrigatório
-    maxlength: 200               // Limita tamanho do nome por segurança
+    required: true,
+    maxlength: 200
   },
   description: {
     type: String,
-    default: ''                  // Descrição opcional
+    default: ''
   },
   price: {
     type: Number,
     required: true,
-    min: 0                       // Preços negativos são bloqueados
+    min: 0
   },
   stock: {
     type: Number,
     required: true,
-    default: 0,                  // Estoque padrão é 0
-    min: 0                       // Impede estoque negativo
+    default: 0,
+    min: 0
   },
   imageUrl: {
     type: String,
-    default: ''                  // URL de imagem opcional
+    default: ''
   },
   platform: {
     type: String,
-    maxlength: 50                // Ex.: PS5, PC, Switch…
+    maxlength: 50
   },
   genre: {
     type: String,
-    maxlength: 50                // Ex.: Ação, RPG…
+    maxlength: 50
   },
   releaseDate: {
-    type: Date                   // Data de lançamento do produto
+    type: Date
   },
   discount: {
     type: Number,
     default: 0,
     min: 0,
-    max: 100                     // Desconto limitado de 0 a 100%
+    max: 100
   },
   isActive: {
     type: Boolean,
-    default: true                // Permite desativar produtos sem excluir
+    default: true
   },
   categoryId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Category'              // Relaciona produto a uma categoria
+    ref: 'Category'
   },
   slug: {
     type: String,
-    unique: true,                // Permite link SEO-friendly
-    sparse: true                 // Permite valores nulos sem quebrar unicidade
+    unique: true,
+    sparse: true
   },
   featured: {
     type: Boolean,
-    default: false               // Marca como "produto em destaque"
+    default: false
   }
 }, {
-  timestamps: true,              // Cria createdAt e updatedAt automática
-  toJSON: { virtuals: true },    // Inclui virtuals ao converter para JSON
+  timestamps: true,
+  toJSON: { virtuals: true },
   toObject: { virtuals: true }
 });
 
-// Virtual populate para trazer a categoria completa
-// sem armazenar diretamente no documento.
-// Mongoose utiliza isso para facilitar consultas com populate().
+// Virtual para popular categoria
 productSchema.virtual('category', {
   ref: 'Category',
-  localField: 'categoryId',      // campo interno do produto
-  foreignField: '_id',           // campo correspondente na categoria
-  justOne: true                  // retorna um único objeto
+  localField: 'categoryId',
+  foreignField: '_id',
+  justOne: true
 });
 
 const Product = mongoose.model('Product', productSchema);
