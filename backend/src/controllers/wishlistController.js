@@ -1,148 +1,145 @@
-const { User, Product } = require('../models');
+const { Review, Product, Order, OrderItem } = require('../models');
+/**
+ * Este controlador gerencia avaliações de jogos feitas pelos usuários.
+ * Ele permite:
+ * - Criar avaliação somente se o usuário tiver comprado o jogo e ainda não tiver avaliado.
+ * - Listar todas as avaliações de um jogo.
+ * - Atualizar a própria avaliação (rating/comentário).
+ * - Deletar uma avaliação (pelo autor ou por um administrador).
+ * Todas as operações usam Mongoose e retornam respostas padronizadas em JSON.
+ */
 
-exports.getWishlist = async (req, res) => {
+// Cria uma avaliação para um jogo, garantindo que o usuário tenha comprado e ainda não avaliou
+exports.createReview = async (req, res) => {
     try {
-        const user = await User.findById(req.user._id).populate({
-            path: 'wishlist',
-            match: { isActive: true }
-        });
-        
-        if (!user) {
-            return res.status(404).json({
-                status: 'fail',
-                message: 'Usuário não encontrado.'
-            });
-        }
-
-        // Filtrar produtos null (quando match não encontra)
-        const activeWishlist = user.wishlist ? user.wishlist.filter(item => item !== null) : [];
-
-        res.status(200).json({
-            status: 'success',
-            data: {
-                wishlist: activeWishlist
-            }
-        });
-    } catch (error) {
-        console.error('Erro em getWishlist:', error);
-        res.status(500).json({
-            status: 'error',
-            message: 'Erro ao buscar lista de desejos.'
-        });
-    }
-};
-
-exports.addToWishlist = async (req, res) => {
-    try {
-        const { productId } = req.body;
+        const { gameId } = req.params;
         const userId = req.user._id;
+        const { rating, comment } = req.body;
 
-        if (!productId) {
-            return res.status(400).json({
-                status: 'fail',
-                message: 'ID do produto é obrigatório.'
-            });
-        }
-
-        const product = await Product.findOne({ _id: productId, isActive: true });
+        const product = await Product.findById(gameId);
         if (!product) {
-            return res.status(404).json({
-                status: 'fail',
-                message: 'Produto não encontrado ou indisponível.'
-            });
+            return res.status(404).json({ status: 'fail', message: 'Jogo não encontrado.' });
         }
 
-        const user = await User.findById(userId);
-        
-        if (user.wishlist.includes(productId)) {
-            return res.status(400).json({
-                status: 'fail',
-                message: 'Produto já está na lista de desejos.'
-            });
+        const existingReview = await Review.findOne({ userId, gameId });
+        if (existingReview) {
+            return res.status(400).json({ status: 'fail', message: 'Você já avaliou este jogo.' });
         }
 
-        user.wishlist.push(productId);
-        await user.save();
-
-        await user.populate({
-            path: 'wishlist',
-            match: { isActive: true }
+        const hasPurchased = await Order.findOne({
+            userId,
+            paymentStatus: 'paid'
+        }).populate({
+            path: 'items',
+            match: { gameId }
         });
 
-        // Filtrar produtos null (quando match não encontra)
-        const activeWishlist = user.wishlist ? user.wishlist.filter(item => item !== null) : [];
+        if (!hasPurchased || !hasPurchased.items || hasPurchased.items.length === 0) {
+            return res.status(403).json({
+                status: 'fail',
+                message: 'Você deve comprar o jogo para poder avaliá-lo.'
+            });
+        }
 
-        res.status(200).json({
+        const newReview = await Review.create({
+            rating,
+            comment,
+            userId,
+            gameId
+        });
+
+        res.status(201).json({
             status: 'success',
-            data: {
-                wishlist: activeWishlist
-            }
+            data: { review: newReview }
         });
+
     } catch (error) {
-        res.status(500).json({
-            status: 'error',
-            message: 'Erro ao adicionar produto à lista de desejos.'
-        });
+        if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map(err => err.message);
+            return res.status(400).json({ status: 'fail', message: messages });
+        }
+        res.status(500).json({ status: 'error', message: 'Erro ao criar a avaliação.' });
     }
 };
 
-exports.removeFromWishlist = async (req, res) => {
+// Retorna todas as avaliações de um jogo
+exports.getReviewsForGame = async (req, res) => {
     try {
-        const { productId } = req.params;
-        const userId = req.user._id;
-
-        const user = await User.findById(userId);
-        
-        if (!user.wishlist.includes(productId)) {
-            return res.status(404).json({
-                status: 'fail',
-                message: 'Produto não está na lista de desejos.'
-            });
-        }
-
-        user.wishlist = user.wishlist.filter(id => id.toString() !== productId);
-        await user.save();
-
-        await user.populate({
-            path: 'wishlist',
-            match: { isActive: true }
-        });
-
-        // Filtrar produtos null (quando match não encontra)
-        const activeWishlist = user.wishlist ? user.wishlist.filter(item => item !== null) : [];
+        const { gameId } = req.params;
+        const reviews = await Review.find({ gameId });
 
         res.status(200).json({
             status: 'success',
-            data: {
-                wishlist: activeWishlist
-            }
+            results: reviews.length,
+            data: { reviews }
         });
+
     } catch (error) {
-        res.status(500).json({
-            status: 'error',
-            message: 'Erro ao remover produto da lista de desejos.'
-        });
+        res.status(500).json({ status: 'error', message: 'Erro ao buscar as avaliações.' });
     }
 };
 
-exports.clearWishlist = async (req, res) => {
+// Atualiza avaliação feita pelo próprio usuário
+exports.updateReview = async (req, res) => {
     try {
+        const { id } = req.params;
         const userId = req.user._id;
-        const user = await User.findById(userId);
-        
-        user.wishlist = [];
-        await user.save();
+        const { rating, comment } = req.body;
+
+        const review = await Review.findById(id);
+
+        if (!review) {
+            return res.status(404).json({ status: 'fail', message: 'Avaliação não encontrada.' });
+        }
+
+        if (review.userId.toString() !== userId.toString()) {
+            return res.status(403).json({
+                status: 'fail',
+                message: 'Você não tem permissão para editar esta avaliação.'
+            });
+        }
+
+        review.rating = rating ?? review.rating;
+        review.comment = comment ?? review.comment;
+
+        await review.save();
 
         res.status(200).json({
             status: 'success',
-            data: {
-                wishlist: []
-            }
+            data: { review }
         });
+
     } catch (error) {
-        res.status(500).json({
-            status: 'error',
-            message: 'Erro ao limpar lista de desejos.'
-        });
+        if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map(err => err.message);
+            return res.status(400).json({ status: 'fail', message: messages });
+        }
+        res.status(500).json({ status: 'error', message: 'Erro ao atualizar a avaliação.' });
+    }
+};
+
+// Exclui avaliação (próprio usuário ou admin)
+exports.deleteReview = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const user = req.user;
+
+        const review = await Review.findById(id);
+        if (!review) {
+            return res.status(404).json({ status: 'fail', message: 'Avaliação não encontrada.' });
+        }
+
+        if (review.userId.toString() !== user._id.toString() && user.role !== 'admin') {
+            return res.status(403).json({
+                status: 'fail',
+                message: 'Você não tem permissão para deletar esta avaliação.'
+            });
+        }
+
+        await review.deleteOne();
+        res.status(204).send();
+
+    } catch (error) {
+        res.status(500).json({ status: 'error', message: 'Erro ao deletar a avaliação.' });
     }
 };

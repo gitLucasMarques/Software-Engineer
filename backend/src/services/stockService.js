@@ -1,4 +1,17 @@
 const { Product } = require('../models');
+/**
+ * Serviço de estoque.
+ * 
+ * Responsável por gerenciar e checar a disponibilidade dos produtos:
+ *  - Verifica se um produto está disponível para venda.
+ *  - Reserva estoque para pedidos e libera caso haja cancelamento.
+ *  - Permite atualização do estoque (para admins).
+ *  - Retorna produtos com estoque baixo.
+ *  - Permite reservar múltiplos produtos de uma vez.
+ *  - Fornece estatísticas gerais do estoque (total, esgotados, baixo estoque, valor total).
+ * 
+ * Basicamente, garante que o estoque esteja correto, evitando vendas de produtos indisponíveis.
+ */
 
 class StockService {
     /**

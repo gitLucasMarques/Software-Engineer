@@ -22,6 +22,12 @@ const passwordResetSchema = new mongoose.Schema({
 }, {
     timestamps: true
 });
+/**
+ * Modelo de Redefinição de Senha (PasswordReset) usando Mongoose.
+ * Armazena tokens temporários para recuperação de senha,
+ * vinculados a um usuário e com data de expiração.
+ * Também registra se o token já foi utilizado. Utiliza timestamps automáticos.
+ */
 
 const PasswordReset = mongoose.model('PasswordReset', passwordResetSchema);
 

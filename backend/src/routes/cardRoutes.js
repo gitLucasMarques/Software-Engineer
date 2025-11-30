@@ -3,14 +3,19 @@ const router = express.Router();
 const PaymentCard = require('../models/paymentCard');
 const authMiddleware = require('../middlewares/authMiddleware');
 
-// Todas as rotas requerem autenticação
+// Middleware global: todas as rotas abaixo exigem usuário autenticado.
 router.use(authMiddleware);
 
-// Listar cartões do usuário
+
+// =============================
+// LISTAR CARTÕES DO USUÁRIO
+// =============================
 router.get('/', async (req, res) => {
   try {
+    // Busca os cartões e oculta o número real criptografado
     const cards = await PaymentCard.find({ userId: req.user._id }).select('-cardNumber');
-    
+
+    // Retorna sempre número mascarado, nunca real
     const cardsWithMasked = cards.map(card => ({
       _id: card._id,
       cardHolderName: card.cardHolderName,
@@ -21,13 +26,11 @@ router.get('/', async (req, res) => {
       isDefault: card.isDefault,
       lastFourDigits: card.lastFourDigits
     }));
-    
+
     res.status(200).json({
       status: 'success',
       results: cardsWithMasked.length,
-      data: {
-        cards: cardsWithMasked
-      }
+      data: { cards: cardsWithMasked }
     });
   } catch (error) {
     res.status(500).json({
@@ -37,39 +40,31 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Adicionar novo cartão
+
+// =============================
+// ADICIONAR NOVO CARTÃO
+// =============================
 router.post('/', async (req, res) => {
   try {
     const { cardNumber, cardHolderName, expiryMonth, expiryYear, cvv, setAsDefault } = req.body;
-    
-    console.log('📥 Recebendo requisição para salvar cartão');
-    console.log('Dados recebidos:', { 
-      cardNumber: cardNumber ? '****' + cardNumber.slice(-4) : 'undefined',
-      cardHolderName,
-      expiryMonth,
-      expiryYear,
-      cvv: cvv ? '***' : 'undefined',
-      setAsDefault
-    });
-    
-    // Validar CVV (não salvar, apenas validar)
+
+    // CVV nunca é salvo — apenas validado nesta etapa.
     if (!cvv || !/^\d{3,4}$/.test(cvv)) {
-      console.log('❌ CVV inválido:', cvv);
       return res.status(400).json({
         status: 'fail',
         message: 'CVV inválido'
       });
     }
-    
-    // Se setAsDefault, remover default dos outros cartões
+
+    // Se marcado como "padrão", remove o status dos outros cartões do usuário
     if (setAsDefault) {
       await PaymentCard.updateMany(
         { userId: req.user._id },
         { isDefault: false }
       );
     }
-    
-    console.log('🔄 Tentando criar cartão no banco...');
+
+    // A criptografia e detecção de bandeira são feitas automaticamente no schema
     const newCard = await PaymentCard.create({
       userId: req.user._id,
       cardNumber: cardNumber.replace(/\s/g, ''),
@@ -78,9 +73,7 @@ router.post('/', async (req, res) => {
       expiryYear,
       isDefault: setAsDefault || false
     });
-    
-    console.log('✅ Cartão criado com sucesso:', newCard._id);
-    
+
     res.status(201).json({
       status: 'success',
       data: {
@@ -95,18 +88,18 @@ router.post('/', async (req, res) => {
         }
       }
     });
+
   } catch (error) {
-    console.error('❌ Erro ao criar cartão:', error);
+
+    // Tratamento amigável de erro de validação do Mongoose
     if (error.name === 'ValidationError') {
       const messages = Object.values(error.errors).map(err => err.message);
-      console.error('Erros de validação:', messages);
       return res.status(400).json({
         status: 'fail',
         message: messages[0]
       });
     }
-    
-    console.error('❌ Erro genérico:', error.message);
+
     res.status(500).json({
       status: 'error',
       message: 'Erro ao adicionar cartão: ' + error.message
@@ -114,29 +107,32 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Definir cartão como padrão
+
+// =============================
+// DEFINIR CARTÃO COMO PADRÃO
+// =============================
 router.patch('/:id/set-default', async (req, res) => {
   try {
-    // Remover default de todos os cartões do usuário
+    // Remove o "padrão" de todos os cartões do usuário
     await PaymentCard.updateMany(
       { userId: req.user._id },
       { isDefault: false }
     );
-    
-    // Definir o cartão selecionado como padrão
+
+    // Marca o cartão solicitado
     const card = await PaymentCard.findOneAndUpdate(
       { _id: req.params.id, userId: req.user._id },
       { isDefault: true },
       { new: true }
     );
-    
+
     if (!card) {
       return res.status(404).json({
         status: 'fail',
         message: 'Cartão não encontrado'
       });
     }
-    
+
     res.status(200).json({
       status: 'success',
       data: {
@@ -149,6 +145,7 @@ router.patch('/:id/set-default', async (req, res) => {
         }
       }
     });
+
   } catch (error) {
     res.status(500).json({
       status: 'error',
@@ -157,22 +154,28 @@ router.patch('/:id/set-default', async (req, res) => {
   }
 });
 
-// Deletar cartão
+
+// =============================
+// DELETAR CARTÃO
+// =============================
 router.delete('/:id', async (req, res) => {
   try {
+    // Segurança: só deleta cartões do próprio usuário
     const card = await PaymentCard.findOneAndDelete({
       _id: req.params.id,
       userId: req.user._id
     });
-    
+
     if (!card) {
       return res.status(404).json({
         status: 'fail',
         message: 'Cartão não encontrado'
       });
     }
-    
+
+    // 204 → sucesso sem retorno
     res.status(204).send();
+
   } catch (error) {
     res.status(500).json({
       status: 'error',
