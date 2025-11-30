@@ -1,16 +1,11 @@
 // Script para adicionar gêneros aos produtos
-// Este script analisa o nome de cada produto e tenta identificar qual gênero ele pertence,
-// usando mapeamentos pré-definidos de jogos e hardware. 
-// Depois, ele atualiza no banco apenas produtos que ainda não possuem gênero definido.
 
 const mongoose = require('mongoose');
 const Product = require('../src/models/product');
 const Category = require('../src/models/category');
 require('dotenv').config();
 
-// Mapeamento principal de gêneros baseado em nomes de jogos.
-// Se o nome do produto contiver uma palavra-chave dessa lista,
-// ele recebe o gênero correspondente.
+// Mapeamento de gêneros por tipo de produto
 const genreMapping = {
   // Jogos de Ação
   'Call of Duty': 'FPS',
@@ -111,8 +106,7 @@ const genreMapping = {
   'Donkey Kong': 'Plataforma'
 };
 
-// Mapeamento semelhante ao anterior, mas voltado para hardware,
-// detectando GPU, CPU, periféricos e consoles pelos nomes.
+// Gêneros para hardware/componentes por nome
 const hardwareGenres = {
   'Placa de Vídeo': 'Hardware/GPU',
   'GeForce': 'Hardware/GPU',
@@ -195,9 +189,6 @@ const hardwareGenres = {
   'Nintendo Switch': 'Console/Nintendo'
 };
 
-// Função que tenta determinar o gênero apenas analisando o nome do produto.
-// Primeiro verifica no mapeamento de jogos, depois no de hardware,
-// depois tenta adivinhar usando palavras-chave genéricas.
 function determineGenre(productName) {
   // Verificar mapeamento de jogos
   for (const [keyword, genre] of Object.entries(genreMapping)) {
@@ -213,7 +204,7 @@ function determineGenre(productName) {
     }
   }
   
-  // Regras adicionais baseadas em palavras-chave comuns
+  // Gêneros padrão por palavras-chave adicionais
   if (productName.match(/FPS|Shooter|Tiro/i)) return 'FPS';
   if (productName.match(/RPG|Role/i)) return 'RPG';
   if (productName.match(/Strategy|Estratégia/i)) return 'Estratégia';
@@ -230,11 +221,10 @@ function determineGenre(productName) {
 
 async function addGenresToProducts() {
   try {
-    // Conecta ao MongoDB antes de começar.
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/sw-ecommerce');
     console.log('✅ Conectado ao MongoDB');
 
-    // Busca produtos que ainda não possuem gênero definido.
+    // Buscar todos os produtos sem gênero
     const productsWithoutGenre = await Product.find({ 
       $or: [
         { genre: { $exists: false } },
@@ -248,7 +238,6 @@ async function addGenresToProducts() {
     let updatedCount = 0;
     let skippedCount = 0;
 
-    // Para cada produto sem gênero, tenta determinar e salvar o gênero.
     for (const product of productsWithoutGenre) {
       const genre = determineGenre(product.name);
       
@@ -263,13 +252,12 @@ async function addGenresToProducts() {
       }
     }
 
-    // Resumo da operação
     console.log('\n📊 Resumo:');
     console.log(`✅ Produtos atualizados: ${updatedCount}`);
     console.log(`⏭️  Produtos pulados: ${skippedCount}`);
     console.log(`📦 Total de produtos: ${productsWithoutGenre.length}`);
 
-    // Estatísticas de quantos produtos ficaram em cada gênero
+    // Mostrar estatísticas de gêneros
     const genreStats = await Product.aggregate([
       { $match: { genre: { $exists: true, $ne: null, $ne: '' } } },
       { $group: { _id: '$genre', count: { $sum: 1 } } },
@@ -281,7 +269,6 @@ async function addGenresToProducts() {
       console.log(`   ${stat._id}: ${stat.count} produto(s)`);
     });
 
-    // Encerra a conexão com o banco
     await mongoose.disconnect();
     console.log('\n✅ Desconectado do MongoDB');
     process.exit(0);
@@ -292,5 +279,4 @@ async function addGenresToProducts() {
   }
 }
 
-// Executa o script
 addGenresToProducts();
