@@ -16,7 +16,7 @@ const CategoriesPage = () => {
 
     const fetchMainCategories = async () => {
       try {
-        const response = await api.get('/categories?onlyMain=true', {
+        const response = await api.get('/api/categories?onlyMain=true', {
           signal: abortController.signal
         });
         

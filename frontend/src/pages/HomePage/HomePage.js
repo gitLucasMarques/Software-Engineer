@@ -22,7 +22,7 @@ const HomePage = () => {
     const fetchFeaturedGames = async () => {
       try {
         // Buscar produtos featured (jogos marcados como destaque)
-        const productsResponse = await api.get('/products?limit=100', {
+        const productsResponse = await api.get('/api/products?limit=100', {
           signal: abortController.signal
         });
         
@@ -37,7 +37,7 @@ const HomePage = () => {
           if (isMounted) setFeaturedGames(featured.slice(0, 8));
         } else {
           // Se não houver featured suficientes, buscar jogos da categoria "Jogos"
-          const categoriesResponse = await api.get('/categories?onlyMain=true', {
+          const categoriesResponse = await api.get('/api/categories?onlyMain=true', {
             signal: abortController.signal
           });
           

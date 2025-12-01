@@ -29,7 +29,7 @@ const PaymentPixPage = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await api.post('/payments/pix/create', { orderId });
+      const response = await api.post('/api/payments/pix/create', { orderId });
       setPixData(response.data.data.pixData);
     } catch (error) {
       console.error('Erro ao gerar código PIX:', error);

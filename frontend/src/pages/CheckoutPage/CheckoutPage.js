@@ -88,7 +88,7 @@ const CheckoutPage = () => {
       };
 
       console.log('Criando pedido com dados:', orderData);
-      const orderResponse = await api.post('/orders', orderData);
+      const orderResponse = await api.post('/api/orders', orderData);
       console.log('Resposta do pedido:', orderResponse.data);
       
       const orderId = orderResponse.data.data.order._id;

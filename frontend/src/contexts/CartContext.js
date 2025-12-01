@@ -19,7 +19,7 @@ export const CartProvider = ({ children }) => {
     
     try {
       setLoading(true);
-      const response = await api.get('/cart');
+      const response = await api.get('/api/cart');
       setCart(response.data.data);
     } catch (error) {
       console.error('Erro ao buscar carrinho:', error);
@@ -49,7 +49,7 @@ export const CartProvider = ({ children }) => {
 
   const addItem = async (productId, quantity = 1) => {
     try {
-      const response = await api.post('/cart/items', { productId, quantity });
+      const response = await api.post('/api/cart/items', { productId, quantity });
       setCart(response.data.data);
       toast.success('Item adicionado ao carrinho!');
     } catch (error) {
@@ -79,7 +79,7 @@ export const CartProvider = ({ children }) => {
 
   const clearCart = async () => {
     try {
-      await api.delete('/cart');
+      await api.delete('/api/cart');
       setCart(null);
       toast.success('Carrinho limpo!');
     } catch (error) {

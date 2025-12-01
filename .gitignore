@@ -1,0 +1,61 @@
+# Dependencies
+node_modules/
+*/node_modules/
+**/node_modules/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Production build
+build/
+dist/
+*/build/
+*/dist/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+esd.yml
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Uploads
+uploads/*
+!uploads/.gitkeep
+
+# Database backups
+database-backup/*
+!database-backup/.gitkeep
+
+# Testing
+coverage/
+.nyc_output/
+
+# Cache
+.cache/
+.parcel-cache/
+.eslintcache
+
+# Temporary files
+*.tmp
+*.temp

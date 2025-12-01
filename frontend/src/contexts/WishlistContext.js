@@ -19,7 +19,7 @@ export const WishlistProvider = ({ children }) => {
     
     try {
       setLoading(true);
-      const response = await api.get('/wishlist');
+      const response = await api.get('/api/wishlist');
       setWishlist(response.data.data.wishlist || []);
     } catch (error) {
       console.error('Erro ao buscar lista de desejos:', error);
@@ -49,7 +49,7 @@ export const WishlistProvider = ({ children }) => {
 
   const addToWishlist = async (productId) => {
     try {
-      const response = await api.post('/wishlist', { productId });
+      const response = await api.post('/api/wishlist', { productId });
       setWishlist(response.data.data.wishlist || []);
       toast.success('Adicionado à lista de desejos!');
       return true;
@@ -71,7 +71,7 @@ export const WishlistProvider = ({ children }) => {
 
   const clearWishlist = async () => {
     try {
-      await api.delete('/wishlist/clear');
+      await api.delete('/api/wishlist/clear');
       setWishlist([]);
       toast.success('Lista de desejos limpa!');
     } catch (error) {

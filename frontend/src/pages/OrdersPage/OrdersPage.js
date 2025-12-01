@@ -14,7 +14,7 @@ const OrdersPage = () => {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/orders');
+      const response = await api.get('/api/orders');
       // Filtrar apenas pedidos com pagamento confirmado
       const paidOrders = (response.data.data.orders || []).filter(
         order => order.paymentStatus === 'paid'

@@ -24,7 +24,7 @@ const ProductsPage = () => {
     const fetchCategories = async () => {
       try {
         // Buscar categoria principal "Jogos"
-        const mainCatsResponse = await api.get('/categories?onlyMain=true', {
+        const mainCatsResponse = await api.get('/api/categories?onlyMain=true', {
           signal: abortController.signal
         });
         
@@ -66,7 +66,7 @@ const ProductsPage = () => {
       
       try {
         // Buscar categoria principal "Jogos"
-        const mainCatsResponse = await api.get('/categories?onlyMain=true', {
+        const mainCatsResponse = await api.get('/api/categories?onlyMain=true', {
           signal: abortController.signal
         });
         
@@ -101,7 +101,7 @@ const ProductsPage = () => {
           if (isMounted) setProducts(productsResponse.data.data.products || []);
         } else {
           // Sem filtro: buscar todos os produtos de todas as subcategorias de Jogos
-          const productsResponse = await api.get('/products?limit=100', {
+          const productsResponse = await api.get('/api/products?limit=100', {
             signal: abortController.signal
           });
           

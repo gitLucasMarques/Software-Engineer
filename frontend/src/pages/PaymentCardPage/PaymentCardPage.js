@@ -38,7 +38,7 @@ const PaymentCardPage = () => {
   const fetchSavedCards = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/cards');
+      const response = await api.get('/api/cards');
       const cards = response.data.data.cards || [];
       setSavedCards(cards);
       
@@ -163,7 +163,7 @@ const PaymentCardPage = () => {
           };
           console.log('📤 Dados do cartão a salvar:', { ...cardToSave, cardNumber: '****', cvv: '***' });
           
-          const saveResponse = await api.post('/cards', cardToSave);
+          const saveResponse = await api.post('/api/cards', cardToSave);
           console.log('✅ Cartão salvo com sucesso!', saveResponse.data);
           toast.success('Cartão salvo para futuras compras!');
           
@@ -180,13 +180,13 @@ const PaymentCardPage = () => {
         payload.cvv = cardData.cvv;
       }
       
-      const response = await api.post('/payments/card/create', payload);
+      const response = await api.post('/api/payments/card/create', payload);
       
       if (response.data.status === 'success') {
         toast.success('Pagamento aprovado!');
         
         // Limpar carrinho
-        await api.delete('/cart').catch(() => {});
+        await api.delete('/api/cart').catch(() => {});
         
         // Redirecionar para comprovante
         navigate(`/payment/receipt/${orderId}`, {
