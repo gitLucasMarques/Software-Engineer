@@ -29,7 +29,21 @@ const cartSchema = new mongoose.Schema({
     },
     items: [cartItemSchema]
 }, {
-    timestamps: true
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
+});
+
+// Virtual para calcular o total do carrinho
+cartSchema.virtual('totalAmount').get(function() {
+    if (!this.items || this.items.length === 0) return 0;
+    
+    return this.items.reduce((total, item) => {
+        if (item.productId && item.productId.price) {
+            return total + (item.productId.price * item.quantity);
+        }
+        return total;
+    }, 0);
 });
 
 const Cart = mongoose.model('Cart', cartSchema);

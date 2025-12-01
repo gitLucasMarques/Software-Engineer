@@ -20,7 +20,12 @@ exports.getCart = async (req, res) => {
         if (!cart) {
             return res.status(200).json({
                 status: 'success',
-                data: null
+                data: {
+                    cart: {
+                        items: [],
+                        totalAmount: 0
+                    }
+                }
             });
         }
 
@@ -31,7 +36,7 @@ exports.getCart = async (req, res) => {
 
         res.status(200).json({
             status: 'success',
-            data: cart
+            data: { cart }
         });
     } catch (error) {
         console.error('Erro em getCart:', error);
@@ -47,20 +52,32 @@ exports.addItemToCart = async (req, res) => {
         const userId = req.user._id;
         const { productId, quantity } = req.body;
 
+        console.log('🔵 [CART] Adicionando item ao carrinho');
+        console.log('👤 User ID:', userId);
+        console.log('📦 Product ID:', productId);
+        console.log('🔢 Quantity:', quantity);
+
         if (!productId || !quantity || quantity < 1) {
+            console.error('❌ [CART] Dados inválidos');
             return res.status(400).json({ status: 'fail', message: 'Dados inválidos.' });
         }
 
         const product = await Product.findOne({ _id: productId, isActive: true });
 
         if (!product) {
+            console.error('❌ [CART] Produto não encontrado');
             return res.status(404).json({ status: 'fail', message: 'Jogo não encontrado ou indisponível.' });
         }
+
+        console.log('✅ [CART] Produto encontrado:', product.name);
 
         let cart = await Cart.findOne({ userId });
 
         if (!cart) {
+            console.log('🔵 [CART] Criando novo carrinho');
             cart = await Cart.create({ userId, items: [] });
+        } else {
+            console.log('✅ [CART] Carrinho existente encontrado');
         }
 
         // Verificar se o produto já está no carrinho
@@ -69,22 +86,28 @@ exports.addItemToCart = async (req, res) => {
         );
 
         if (existingItemIndex > -1) {
+            console.log('🔵 [CART] Produto já existe no carrinho, atualizando quantidade');
             const newQuantity = cart.items[existingItemIndex].quantity + quantity;
             
             if (product.stock < newQuantity) {
+                console.error('❌ [CART] Estoque insuficiente');
                 return res.status(400).json({ status: 'fail', message: 'Estoque insuficiente.' });
             }
 
             cart.items[existingItemIndex].quantity = newQuantity;
         } else {
+            console.log('🔵 [CART] Adicionando novo produto ao carrinho');
             if (product.stock < quantity) {
+                console.error('❌ [CART] Estoque insuficiente');
                 return res.status(400).json({ status: 'fail', message: 'Estoque insuficiente.' });
             }
 
             cart.items.push({ productId, quantity });
         }
 
+        console.log('💾 [CART] Salvando carrinho...');
         await cart.save();
+        console.log('✅ [CART] Carrinho salvo');
         
         // Popular o carrinho antes de retornar
         await cart.populate({
@@ -92,18 +115,23 @@ exports.addItemToCart = async (req, res) => {
             match: { isActive: true }
         });
 
+        console.log('📦 [CART] Items no carrinho:', cart.items.length);
+
         // Filtrar itens com produtos null (inativos)
         if (cart.items) {
             cart.items = cart.items.filter(item => item.productId !== null);
         }
 
+        console.log('✅ [CART] Retornando carrinho com', cart.items.length, 'itens');
+
         res.status(200).json({
             status: 'success',
-            data: cart
+            data: { cart }
         });
 
     } catch (error) {
-        console.error('Erro em addItemToCart:', error);
+        console.error('❌ [CART] Erro em addItemToCart:', error);
+        console.error('Stack:', error.stack);
         res.status(500).json({
             status: 'error',
             message: 'Erro ao adicionar item ao carrinho.'

@@ -10,7 +10,7 @@
  * Em resumo: centraliza toda a orquestração de fluxo de pagamento e suas integrações.
  */
 
-const { Order, Payment } = require('../models');
+const { Order, Payment, Cart } = require('../models');
 const paymentService = require('../services/paymentService');
 const pixBoletoService = require('../services/pixBoletoService');
 
@@ -505,7 +505,6 @@ exports.createCardPayment = async (req, res) => {
 
         console.log('🚀 [CARD] Limpando carrinho...');
         // Limpar carrinho após pagamento aprovado
-        const Cart = require('../models/cart');
         const cart = await Cart.findOne({ userId });
         if (cart) {
             cart.items = [];
@@ -572,7 +571,6 @@ exports.simulatePaymentApproval = async (req, res) => {
 
         console.log('🚀 [SIMULATE] Limpando carrinho...');
         // Limpar carrinho após pagamento aprovado
-        const Cart = require('../models/cart');
         const cart = await Cart.findOne({ userId });
         if (cart) {
             cart.items = [];
