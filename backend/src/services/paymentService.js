@@ -181,6 +181,17 @@ class PaymentService {
     try {
       console.log('🔵 [PIX] Processando pagamento para pedido:', order._id);
       
+      // Verificar se pedido já expirou (30 minutos desde criação)
+      const orderAge = Date.now() - new Date(order.createdAt).getTime();
+      const thirtyMinutes = 30 * 60 * 1000;
+      
+      if (orderAge > thirtyMinutes) {
+        order.status = 'cancelled';
+        order.paymentStatus = 'failed';
+        await order.save();
+        throw new Error('Pedido expirou. O tempo para pagamento é de 30 minutos.');
+      }
+      
       // Gerar código PIX
       const pixData = pixBoletoService.generatePixCode(
         order._id.toString(),

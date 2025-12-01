@@ -142,6 +142,18 @@ exports.createCardPayment = async (req, res) => {
         console.log('💰 Installments:', installments);
         console.log('💾 Save Card:', saveCard);
 
+        // Validação de parcelas mínimas (R$ 5,00 por parcela)
+        if (installments > 1) {
+            const minInstallmentAmount = 5.00;
+            const order = await Order.findById(orderId);
+            if (order && (order.totalAmount / installments) < minInstallmentAmount) {
+                return res.status(400).json({ 
+                    status: 'fail', 
+                    message: `Valor mínimo de R$ ${minInstallmentAmount.toFixed(2)} por parcela não atingido.` 
+                });
+            }
+        }
+
         if (!orderId) {
             console.error('❌ [CARD] Order ID não fornecido');
             return res.status(400).json({ status: 'fail', message: 'O ID do pedido é obrigatório.' });
