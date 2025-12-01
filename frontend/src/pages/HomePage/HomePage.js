@@ -21,14 +21,18 @@ const HomePage = () => {
 
     const fetchFeaturedGames = async () => {
       try {
+        console.log('🔵 [HOME] Buscando produtos featured...');
         // Buscar produtos featured (jogos marcados como destaque)
         const productsResponse = await api.get('/api/products?limit=100', {
           signal: abortController.signal
         });
         
+        console.log('✅ [HOME] Resposta recebida:', productsResponse.data);
+        
         if (!isMounted) return;
         
         const allProducts = productsResponse.data.data.products || [];
+        console.log('📦 [HOME] Total de produtos recebidos:', allProducts.length);
         
         // Filtrar produtos featured
         const featured = allProducts.filter(product => product.featured === true);

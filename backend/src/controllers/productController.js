@@ -14,6 +14,9 @@ const { Product, Review, User } = require('../models');
 
 exports.getAllProducts = async (req, res) => {
     try {
+        console.log('🔵 [PRODUCTS] Requisição getAllProducts recebida');
+        console.log('📋 Query params:', req.query);
+        
         const { category, categoryId, platform, sort, search } = req.query;
         const page = parseInt(req.query.page, 10) || 1;
         const limit = parseInt(req.query.limit, 10) || 100;
@@ -25,6 +28,8 @@ exports.getAllProducts = async (req, res) => {
         if (categoryId) query.categoryId = categoryId;
         if (platform) query.platform = { $regex: platform, $options: 'i' };
 
+        console.log('🔍 Query construída:', query);
+
         let sortOrder = { createdAt: -1 };
         if (sort) {
             const direction = sort.startsWith('-') ? -1 : 1;
@@ -32,12 +37,25 @@ exports.getAllProducts = async (req, res) => {
             sortOrder = { [field]: direction };
         }
 
+        console.log('🚀 Buscando produtos no banco...');
         const count = await Product.countDocuments(query);
+        console.log('📊 Total de produtos encontrados:', count);
+        
         const products = await Product.find(query)
             .populate('categoryId', 'name slug')
             .sort(sortOrder)
             .limit(limit)
             .skip(skip);
+
+        console.log('✅ Produtos retornados:', products.length);
+        if (products.length > 0) {
+            console.log('📦 Exemplo de produto:', {
+                id: products[0]._id,
+                name: products[0].name,
+                price: products[0].price,
+                imageUrl: products[0].imageUrl
+            });
+        }
 
         res.status(200).json({
             status: 'success',
@@ -49,7 +67,8 @@ exports.getAllProducts = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Erro em getAllProducts:', error);
+        console.error('❌ [PRODUCTS] Erro em getAllProducts:', error);
+        console.error('Stack:', error.stack);
         res.status(500).json({ status: 'error', message: 'Erro ao buscar os jogos.' });
     }
 };

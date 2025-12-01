@@ -92,22 +92,29 @@ const ProductsPage = () => {
 
         // Se há filtro de categoria, buscar apenas dessa categoria
         if (categoryFilter) {
+          console.log('🔵 [PRODUCTS] Buscando produtos com filtro de categoria:', categoryFilter);
           const productsResponse = await api.get(`/api/products?categoryId=${categoryFilter}&limit=100`, {
             signal: abortController.signal
           });
+          
+          console.log('✅ [PRODUCTS] Produtos recebidos:', productsResponse.data);
           
           if (!isMounted) return;
           
           if (isMounted) setProducts(productsResponse.data.data.products || []);
         } else {
           // Sem filtro: buscar todos os produtos de todas as subcategorias de Jogos
+          console.log('🔵 [PRODUCTS] Buscando todos os produtos...');
           const productsResponse = await api.get('/api/products?limit=100', {
             signal: abortController.signal
           });
           
+          console.log('✅ [PRODUCTS] Todos produtos recebidos:', productsResponse.data);
+          
           if (!isMounted) return;
           
           const allProducts = productsResponse.data.data.products || [];
+          console.log('📦 [PRODUCTS] Total de produtos:', allProducts.length);
           
           // Filtrar apenas jogos (produtos cujo categoryId está nas subcategorias de Jogos)
           const games = allProducts.filter(product => {
