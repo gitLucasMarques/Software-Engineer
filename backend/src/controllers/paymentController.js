@@ -219,29 +219,43 @@ exports.createPixPayment = async (req, res) => {
         const { orderId } = req.body;
         const userId = req.user._id;
 
+        console.log('🔵 [PIX] Requisição recebida');
+        console.log('👤 User ID:', userId);
+        console.log('📦 Order ID:', orderId);
+
         if (!orderId) {
+            console.error('❌ [PIX] Order ID não fornecido');
             return res.status(400).json({ status: 'fail', message: 'O ID do pedido é obrigatório.' });
         }
 
         const order = await Order.findById(orderId).populate('userId');
 
         if (!order) {
+            console.error('❌ [PIX] Pedido não encontrado:', orderId);
             return res.status(404).json({ status: 'fail', message: 'Pedido não encontrado.' });
         }
 
+        console.log('✅ [PIX] Pedido encontrado:', order._id);
+        console.log('👤 [PIX] Dono do pedido:', order.userId._id);
+
         if (order.userId._id.toString() !== userId.toString()) {
+            console.error('❌ [PIX] Acesso negado - usuário não é dono do pedido');
             return res.status(403).json({ status: 'fail', message: 'Acesso negado a este pedido.' });
         }
 
         if (order.paymentStatus === 'paid') {
+            console.warn('⚠️  [PIX] Pedido já foi pago');
             return res.status(400).json({ status: 'fail', message: 'Este pedido já foi pago.' });
         }
 
+        console.log('🚀 [PIX] Gerando código PIX...');
         const pixData = pixBoletoService.generatePixCode(
             order._id.toString(),
             order.totalAmount,
             order.userId.email
         );
+
+        console.log('✅ [PIX] Código gerado:', pixData.transactionId);
 
         const payment = await Payment.findOneAndUpdate(
             { orderId: order._id },
@@ -260,6 +274,8 @@ exports.createPixPayment = async (req, res) => {
             { upsert: true, new: true, setDefaultsOnInsert: true }
         );
 
+        console.log('✅ [PIX] Pagamento salvo:', payment._id);
+
         res.status(200).json({
             status: 'success',
             data: {
@@ -269,7 +285,8 @@ exports.createPixPayment = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Erro ao criar pagamento PIX:', error);
+        console.error('❌ [PIX] Erro ao criar pagamento PIX:', error);
+        console.error('Stack:', error.stack);
         res.status(500).json({
             status: 'error',
             message: error.message || 'Erro ao criar pagamento PIX.'
@@ -282,21 +299,33 @@ exports.createBoletoPayment = async (req, res) => {
         const { orderId, installments = 1 } = req.body;
         const userId = req.user._id;
 
+        console.log('🔵 [BOLETO] Requisição recebida');
+        console.log('👤 User ID:', userId);
+        console.log('📦 Order ID:', orderId);
+        console.log('💳 Installments:', installments);
+
         if (!orderId) {
+            console.error('❌ [BOLETO] Order ID não fornecido');
             return res.status(400).json({ status: 'fail', message: 'O ID do pedido é obrigatório.' });
         }
 
         const order = await Order.findById(orderId).populate('userId');
 
         if (!order) {
+            console.error('❌ [BOLETO] Pedido não encontrado:', orderId);
             return res.status(404).json({ status: 'fail', message: 'Pedido não encontrado.' });
         }
 
+        console.log('✅ [BOLETO] Pedido encontrado:', order._id);
+        console.log('👤 [BOLETO] Dono do pedido:', order.userId._id);
+
         if (order.userId._id.toString() !== userId.toString()) {
+            console.error('❌ [BOLETO] Acesso negado - usuário não é dono do pedido');
             return res.status(403).json({ status: 'fail', message: 'Acesso negado a este pedido.' });
         }
 
         if (order.paymentStatus === 'paid') {
+            console.warn('⚠️  [BOLETO] Pedido já foi pago');
             return res.status(400).json({ status: 'fail', message: 'Este pedido já foi pago.' });
         }
 
@@ -307,6 +336,7 @@ exports.createBoletoPayment = async (req, res) => {
             ? `${order.shippingAddress.address}, ${order.shippingAddress.city} - ${order.shippingAddress.state}, CEP: ${order.shippingAddress.zipCode}`
             : 'Não informado';
 
+        console.log('🚀 [BOLETO] Gerando boleto...');
         const boletoData = pixBoletoService.generateBoleto(
             order._id.toString(),
             order.totalAmount,
@@ -317,6 +347,8 @@ exports.createBoletoPayment = async (req, res) => {
                 address: payerAddress
             }
         );
+
+        console.log('✅ [BOLETO] Boleto gerado:', boletoData.transactionId);
 
         const payment = await Payment.findOneAndUpdate(
             { orderId: order._id },
@@ -337,6 +369,8 @@ exports.createBoletoPayment = async (req, res) => {
             { upsert: true, new: true, setDefaultsOnInsert: true }
         );
 
+        console.log('✅ [BOLETO] Pagamento salvo:', payment._id);
+
         res.status(200).json({
             status: 'success',
             data: {
@@ -346,7 +380,8 @@ exports.createBoletoPayment = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Erro ao criar boleto:', error);
+        console.error('❌ [BOLETO] Erro ao criar boleto:', error);
+        console.error('Stack:', error.stack);
         res.status(500).json({
             status: 'error',
             message: error.message || 'Erro ao criar boleto.'
@@ -359,35 +394,51 @@ exports.createCardPayment = async (req, res) => {
         const { orderId, cardId, cardData, installments = 1, paymentType = 'credit' } = req.body;
         const userId = req.user._id;
 
+        console.log('🔵 [CARD] Requisição recebida');
+        console.log('👤 User ID:', userId);
+        console.log('📦 Order ID:', orderId);
+        console.log('💳 Payment Type:', paymentType);
+        console.log('💰 Installments:', installments);
+
         if (!orderId) {
+            console.error('❌ [CARD] Order ID não fornecido');
             return res.status(400).json({ status: 'fail', message: 'O ID do pedido é obrigatório.' });
         }
 
         if (!cardId && !cardData) {
+            console.error('❌ [CARD] Dados do cartão não fornecidos');
             return res.status(400).json({ status: 'fail', message: 'Dados do cartão são obrigatórios.' });
         }
 
         const order = await Order.findById(orderId).populate('userId');
 
         if (!order) {
+            console.error('❌ [CARD] Pedido não encontrado:', orderId);
             return res.status(404).json({ status: 'fail', message: 'Pedido não encontrado.' });
         }
 
+        console.log('✅ [CARD] Pedido encontrado:', order._id);
+        console.log('👤 [CARD] Dono do pedido:', order.userId._id);
+
         if (order.userId._id.toString() !== userId.toString()) {
+            console.error('❌ [CARD] Acesso negado - usuário não é dono do pedido');
             return res.status(403).json({ status: 'fail', message: 'Acesso negado a este pedido.' });
         }
 
         if (order.paymentStatus === 'paid') {
+            console.warn('⚠️  [CARD] Pedido já foi pago');
             return res.status(400).json({ status: 'fail', message: 'Este pedido já foi pago.' });
         }
 
         let cardInfo = cardData;
 
         if (cardId) {
+            console.log('🔵 [CARD] Usando cartão salvo:', cardId);
             const PaymentCard = require('../models/paymentCard');
             const savedCard = await PaymentCard.findOne({ _id: cardId, userId: userId });
             
             if (!savedCard) {
+                console.error('❌ [CARD] Cartão salvo não encontrado');
                 return res.status(404).json({ status: 'fail', message: 'Cartão não encontrado.' });
             }
 
@@ -399,10 +450,14 @@ exports.createCardPayment = async (req, res) => {
             };
 
             if (!cardInfo.cvv) {
+                console.error('❌ [CARD] CVV não fornecido');
                 return res.status(400).json({ status: 'fail', message: 'CVV é obrigatório.' });
             }
+        } else {
+            console.log('🔵 [CARD] Usando novo cartão');
         }
 
+        console.log('🚀 [CARD] Processando pagamento...');
         const paymentResult = await pixBoletoService.processCardPayment(
             cardInfo,
             order.totalAmount,
@@ -412,11 +467,14 @@ exports.createCardPayment = async (req, res) => {
         );
 
         if (!paymentResult.success) {
+            console.error('❌ [CARD] Pagamento rejeitado:', paymentResult.message);
             return res.status(400).json({
                 status: 'fail',
                 message: paymentResult.message
             });
         }
+
+        console.log('✅ [CARD] Pagamento aprovado');
 
         const payment = await Payment.findOneAndUpdate(
             { orderId: order._id },
@@ -438,17 +496,26 @@ exports.createCardPayment = async (req, res) => {
             { upsert: true, new: true, setDefaultsOnInsert: true }
         );
 
+        console.log('✅ [CARD] Pagamento salvo:', payment._id);
+
+        console.log('🚀 [CARD] Atualizando pedido...');
         order.paymentStatus = 'paid';
         order.status = 'processing';
         await order.save();
 
+        console.log('🚀 [CARD] Limpando carrinho...');
         // Limpar carrinho após pagamento aprovado
         const Cart = require('../models/cart');
         const cart = await Cart.findOne({ userId });
         if (cart) {
             cart.items = [];
             await cart.save();
+            console.log('✅ [CARD] Carrinho limpo');
+        } else {
+            console.log('⚠️  [CARD] Carrinho não encontrado');
         }
+
+        console.log('✅ [CARD] Pagamento concluído com sucesso');
 
         res.status(200).json({
             status: 'success',
@@ -459,7 +526,8 @@ exports.createCardPayment = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Erro ao processar pagamento com cartão:', error);
+        console.error('❌ [CARD] Erro ao processar pagamento com cartão:', error);
+        console.error('Stack:', error.stack);
         res.status(500).json({
             status: 'error',
             message: error.message || 'Erro ao processar pagamento com cartão.'
@@ -472,32 +540,49 @@ exports.simulatePaymentApproval = async (req, res) => {
         const { orderId } = req.params;
         const userId = req.user._id;
 
+        console.log('🔵 [SIMULATE] Requisição recebida');
+        console.log('👤 User ID:', userId);
+        console.log('📦 Order ID:', orderId);
+
         const order = await Order.findById(orderId);
 
         if (!order) {
+            console.error('❌ [SIMULATE] Pedido não encontrado:', orderId);
             return res.status(404).json({ status: 'fail', message: 'Pedido não encontrado.' });
         }
 
+        console.log('✅ [SIMULATE] Pedido encontrado:', order._id);
+        console.log('👤 [SIMULATE] Dono do pedido:', order.userId);
+
         if (order.userId.toString() !== userId.toString()) {
+            console.error('❌ [SIMULATE] Acesso negado - usuário não é dono do pedido');
             return res.status(403).json({ status: 'fail', message: 'Acesso negado a este pedido.' });
         }
 
+        console.log('🚀 [SIMULATE] Atualizando pagamento...');
         await Payment.findOneAndUpdate(
             { orderId: order._id },
             { status: 'paid' }
         );
 
+        console.log('🚀 [SIMULATE] Atualizando pedido...');
         order.paymentStatus = 'paid';
         order.status = 'processing';
         await order.save();
 
+        console.log('🚀 [SIMULATE] Limpando carrinho...');
         // Limpar carrinho após pagamento aprovado
         const Cart = require('../models/cart');
         const cart = await Cart.findOne({ userId });
         if (cart) {
             cart.items = [];
             await cart.save();
+            console.log('✅ [SIMULATE] Carrinho limpo');
+        } else {
+            console.log('⚠️  [SIMULATE] Carrinho não encontrado');
         }
+
+        console.log('✅ [SIMULATE] Simulação concluída com sucesso');
 
         res.status(200).json({
             status: 'success',
@@ -505,7 +590,8 @@ exports.simulatePaymentApproval = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Erro ao simular aprovação:', error);
+        console.error('❌ [SIMULATE] Erro ao simular aprovação:', error);
+        console.error('Stack:', error.stack);
         res.status(500).json({
             status: 'error',
             message: error.message || 'Erro ao simular aprovação.'

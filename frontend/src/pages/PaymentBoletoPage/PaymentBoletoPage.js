@@ -29,13 +29,17 @@ const PaymentBoletoPage = () => {
     try {
       setLoading(true);
       setError(null);
+      console.log('🔵 Gerando boleto para pedido:', orderId);
       const response = await api.post('/api/payments/boleto/create', { 
         orderId,
         installments 
       });
+      console.log('✅ Boleto gerado com sucesso:', response.data);
       setBoletoData(response.data.data.boletoData);
     } catch (error) {
-      console.error('Erro ao gerar boleto:', error);
+      console.error('❌ Erro ao gerar boleto:', error);
+      console.error('Resposta do erro:', error.response?.data);
+      console.error('Status do erro:', error.response?.status);
       const errorMessage = error.response?.data?.message || 'Erro ao gerar boleto';
       setError(errorMessage);
       toast.error(errorMessage);
@@ -66,7 +70,9 @@ const PaymentBoletoPage = () => {
 
   const handleSimulatePayment = async () => {
     try {
+      console.log('🔵 Simulando pagamento boleto para pedido:', orderId);
       await api.post(`/api/payments/simulate-approval/${orderId}`);
+      console.log('✅ Pagamento boleto simulado com sucesso');
       toast.success('Pagamento simulado com sucesso!');
       
       // Carrinho será limpo automaticamente pelo backend
@@ -80,8 +86,10 @@ const PaymentBoletoPage = () => {
         });
       }, 1000);
     } catch (error) {
-      console.error('Erro ao simular pagamento:', error);
-      toast.error('Erro ao simular pagamento');
+      console.error('❌ Erro ao simular pagamento:', error);
+      console.error('Resposta do erro:', error.response?.data);
+      console.error('Status do erro:', error.response?.status);
+      toast.error(error.response?.data?.message || 'Erro ao simular pagamento');
     }
   };
 

@@ -29,10 +29,14 @@ const PaymentPixPage = () => {
     try {
       setLoading(true);
       setError(null);
+      console.log('🔵 Gerando PIX para pedido:', orderId);
       const response = await api.post('/api/payments/pix/create', { orderId });
+      console.log('✅ PIX gerado com sucesso:', response.data);
       setPixData(response.data.data.pixData);
     } catch (error) {
-      console.error('Erro ao gerar código PIX:', error);
+      console.error('❌ Erro ao gerar código PIX:', error);
+      console.error('Resposta do erro:', error.response?.data);
+      console.error('Status do erro:', error.response?.status);
       const errorMessage = error.response?.data?.message || 'Erro ao gerar código PIX';
       setError(errorMessage);
       toast.error(errorMessage);
@@ -59,7 +63,9 @@ const PaymentPixPage = () => {
 
   const handleSimulatePayment = async () => {
     try {
+      console.log('🔵 Simulando pagamento para pedido:', orderId);
       await api.post(`/api/payments/simulate-approval/${orderId}`);
+      console.log('✅ Pagamento simulado com sucesso');
       toast.success('Pagamento simulado com sucesso!');
       
       // Carrinho será limpo automaticamente pelo backend
@@ -73,8 +79,10 @@ const PaymentPixPage = () => {
         });
       }, 1000);
     } catch (error) {
-      console.error('Erro ao simular pagamento:', error);
-      toast.error('Erro ao simular pagamento');
+      console.error('❌ Erro ao simular pagamento:', error);
+      console.error('Resposta do erro:', error.response?.data);
+      console.error('Status do erro:', error.response?.status);
+      toast.error(error.response?.data?.message || 'Erro ao simular pagamento');
     }
   };
 

@@ -38,7 +38,9 @@ const PaymentCardPage = () => {
   const fetchSavedCards = async () => {
     try {
       setLoading(true);
+      console.log('🔵 Buscando cartões salvos...');
       const response = await api.get('/api/cards');
+      console.log('✅ Cartões carregados:', response.data);
       const cards = response.data.data.cards || [];
       setSavedCards(cards);
       
@@ -180,7 +182,9 @@ const PaymentCardPage = () => {
         payload.cvv = cardData.cvv;
       }
       
+      console.log('🔵 Enviando pagamento com cartão:', payload);
       const response = await api.post('/api/payments/card/create', payload);
+      console.log('✅ Pagamento processado:', response.data);
       
       if (response.data.status === 'success') {
         toast.success('Pagamento aprovado!');
@@ -197,7 +201,9 @@ const PaymentCardPage = () => {
         });
       }
     } catch (error) {
-      console.error('Erro ao processar pagamento:', error);
+      console.error('❌ Erro ao processar pagamento:', error);
+      console.error('Resposta do erro:', error.response?.data);
+      console.error('Status do erro:', error.response?.status);
       toast.error(error.response?.data?.message || 'Erro ao processar pagamento');
     } finally {
       setProcessing(false);
