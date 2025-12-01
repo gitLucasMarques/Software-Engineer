@@ -126,7 +126,10 @@ exports.addItemToCart = async (req, res) => {
 
         res.status(200).json({
             status: 'success',
-            data: { cart }
+            data: { 
+                cart,
+                message: 'Item adicionado ao carrinho com sucesso'
+            }
         });
 
     } catch (error) {
@@ -185,10 +188,14 @@ exports.updateItemQuantity = async (req, res) => {
 
         res.status(200).json({
             status: 'success',
-            data: cart
+            data: { 
+                cart,
+                message: 'Quantidade atualizada com sucesso'
+            }
         });
 
     } catch (error) {
+        console.error('❌ [CART] Erro ao atualizar quantidade:', error);
         res.status(500).json({
             status: 'error',
             message: 'Erro ao atualizar a quantidade do item.'
@@ -222,10 +229,14 @@ exports.removeItemFromCart = async (req, res) => {
 
         res.status(200).json({
             status: 'success',
-            data: cart
+            data: { 
+                cart,
+                message: 'Item removido com sucesso'
+            }
         });
 
     } catch (error) {
+        console.error('❌ [CART] Erro ao remover item:', error);
         res.status(500).json({
             status: 'error',
             message: 'Erro ao remover o item do carrinho.'
@@ -247,10 +258,14 @@ exports.clearCart = async (req, res) => {
 
         res.status(200).json({
             status: 'success',
-            data: cart
+            data: { 
+                cart,
+                message: 'Carrinho limpo com sucesso'
+            }
         });
 
     } catch (error) {
+        console.error('❌ [CART] Erro ao limpar carrinho:', error);
         res.status(500).json({
             status: 'error',
             message: 'Erro ao limpar o carrinho.'
