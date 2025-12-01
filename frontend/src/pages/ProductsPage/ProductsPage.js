@@ -35,7 +35,7 @@ const ProductsPage = () => {
         
         if (jogosCategory) {
           // Buscar subcategorias de Jogos
-          const subcatsResponse = await api.get(`/categories/${jogosCategory._id}/subcategories`, {
+          const subcatsResponse = await api.get(`/api/categories/${jogosCategory._id}/subcategories`, {
             signal: abortController.signal
           });
           
@@ -81,7 +81,7 @@ const ProductsPage = () => {
         }
 
         // Buscar subcategorias de Jogos
-        const subcatsResponse = await api.get(`/categories/${jogosCategory._id}/subcategories`, {
+        const subcatsResponse = await api.get(`/api/categories/${jogosCategory._id}/subcategories`, {
           signal: abortController.signal
         });
         
@@ -92,7 +92,7 @@ const ProductsPage = () => {
 
         // Se há filtro de categoria, buscar apenas dessa categoria
         if (categoryFilter) {
-          const productsResponse = await api.get(`/products?categoryId=${categoryFilter}&limit=100`, {
+          const productsResponse = await api.get(`/api/products?categoryId=${categoryFilter}&limit=100`, {
             signal: abortController.signal
           });
           

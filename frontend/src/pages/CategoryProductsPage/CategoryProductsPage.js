@@ -26,7 +26,7 @@ const CategoryProductsPage = () => {
       
       try {
         // Buscar informações da categoria
-        const categoryResponse = await api.get(`/categories/${categoryId}`, {
+        const categoryResponse = await api.get(`/api/categories/${categoryId}`, {
           signal: abortController.signal
         });
         
@@ -35,7 +35,7 @@ const CategoryProductsPage = () => {
         setCategory(categoryResponse.data.data.category);
 
         // Buscar produtos da categoria
-        const productsResponse = await api.get(`/products?categoryId=${categoryId}&limit=100`, {
+        const productsResponse = await api.get(`/api/products?categoryId=${categoryId}&limit=100`, {
           signal: abortController.signal
         });
         

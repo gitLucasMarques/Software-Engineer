@@ -13,7 +13,7 @@ const SearchPage = () => {
     const fetchProducts = async () => {
       setLoading(true);
       try {
-        const response = await api.get(`/products?search=${query}`);
+        const response = await api.get(`/api/products?search=${query}`);
         setProducts(response.data.data.products || []);
       } catch (error) {
         console.error('Erro ao buscar produtos:', error);

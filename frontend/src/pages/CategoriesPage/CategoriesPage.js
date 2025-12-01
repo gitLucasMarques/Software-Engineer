@@ -44,7 +44,7 @@ const CategoriesPage = () => {
     setLoading(true);
     
     try {
-      const response = await api.get(`/categories/${category._id}/subcategories`);
+      const response = await api.get(`/api/categories/${category._id}/subcategories`);
       setSubcategories(response.data.data.categories || []);
     } catch (error) {
       console.error('Erro ao carregar subcategorias:', error);

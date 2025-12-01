@@ -17,7 +17,7 @@ const PaymentReceiptPage = () => {
   const fetchOrderDetails = async () => {
     try {
       setLoading(true);
-      const response = await api.get(`/orders/${orderId}`);
+      const response = await api.get(`/api/orders/${orderId}`);
       setOrder(response.data.data?.order || response.data.data);
     } catch (error) {
       console.error('Erro ao buscar detalhes do pedido:', error);

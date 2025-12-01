@@ -18,7 +18,7 @@ const ProductDetailPage = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const response = await api.get(`/products/${id}`);
+        const response = await api.get(`/api/products/${id}`);
         setProduct(response.data.data.product);
       } catch (error) {
         console.error('Erro ao carregar produto:', error);

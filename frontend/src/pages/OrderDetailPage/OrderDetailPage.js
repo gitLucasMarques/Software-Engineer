@@ -16,7 +16,7 @@ const OrderDetailPage = () => {
         setLoading(true);
         setError(null);
         console.log('Fetching order with ID:', id);
-        const response = await api.get(`/orders/${id}`);
+        const response = await api.get(`/api/orders/${id}`);
         console.log('Order response:', response.data);
         
         // Backend retorna { status: 'success', data: { order: {...} } }

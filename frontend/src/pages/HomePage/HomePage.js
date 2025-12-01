@@ -47,7 +47,7 @@ const HomePage = () => {
           const jogosCategory = categories.find(cat => cat.name === 'Jogos');
           
           if (jogosCategory) {
-            const subcatsResponse = await api.get(`/categories/${jogosCategory._id}/subcategories`, {
+            const subcatsResponse = await api.get(`/api/categories/${jogosCategory._id}/subcategories`, {
               signal: abortController.signal
             });
             
