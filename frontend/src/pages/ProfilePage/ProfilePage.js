@@ -37,7 +37,7 @@ const ProfilePage = () => {
     e.preventDefault();
     
     try {
-      const response = await api.put('/auth/update-me', formData);
+      const response = await api.put('/api/auth/update-me', formData);
       const updatedUser = response.data.data.user;
       
       // Atualizar usuário no localStorage e contexto
@@ -92,7 +92,7 @@ const ProfilePage = () => {
     }
 
     try {
-      await api.put('/auth/update-password', {
+      await api.put('/api/auth/update-password', {
         currentPassword: passwordData.currentPassword,
         newPassword: passwordData.newPassword
       });

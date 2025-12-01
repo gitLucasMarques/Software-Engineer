@@ -59,7 +59,7 @@ const PaymentPixPage = () => {
 
   const handleSimulatePayment = async () => {
     try {
-      await api.post(`/payments/simulate-approval/${orderId}`);
+      await api.post(`/api/payments/simulate-approval/${orderId}`);
       toast.success('Pagamento simulado com sucesso!');
       setTimeout(() => {
         navigate(`/payment/receipt/${orderId}`, { 

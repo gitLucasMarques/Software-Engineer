@@ -61,7 +61,7 @@ export const WishlistProvider = ({ children }) => {
 
   const removeFromWishlist = async (productId) => {
     try {
-      const response = await api.delete(`/wishlist/${productId}`);
+      const response = await api.delete(`/api/wishlist/${productId}`);
       setWishlist(response.data.data.wishlist || []);
       toast.success('Removido da lista de desejos!');
     } catch (error) {

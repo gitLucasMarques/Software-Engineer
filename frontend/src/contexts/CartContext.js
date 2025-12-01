@@ -59,7 +59,7 @@ export const CartProvider = ({ children }) => {
 
   const updateItem = async (itemId, quantity) => {
     try {
-      const response = await api.put(`/cart/items/${itemId}`, { quantity });
+      const response = await api.put(`/api/cart/items/${itemId}`, { quantity });
       setCart(response.data.data);
       toast.success('Carrinho atualizado!');
     } catch (error) {
@@ -69,7 +69,7 @@ export const CartProvider = ({ children }) => {
 
   const removeItem = async (itemId) => {
     try {
-      const response = await api.delete(`/cart/items/${itemId}`);
+      const response = await api.delete(`/api/cart/items/${itemId}`);
       setCart(response.data.data);
       toast.success('Item removido do carrinho!');
     } catch (error) {
