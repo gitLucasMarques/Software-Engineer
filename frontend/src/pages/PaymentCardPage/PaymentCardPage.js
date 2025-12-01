@@ -185,8 +185,7 @@ const PaymentCardPage = () => {
       if (response.data.status === 'success') {
         toast.success('Pagamento aprovado!');
         
-        // Limpar carrinho
-        await api.delete('/api/cart').catch(() => {});
+        // Carrinho será limpo automaticamente pelo backend
         
         // Redirecionar para comprovante
         navigate(`/payment/receipt/${orderId}`, {

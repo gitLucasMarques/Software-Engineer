@@ -57,8 +57,10 @@ exports.createOrder = async (req, res) => {
             items: orderItems
         });
 
-        cart.items = [];
-        await cart.save();
+        // NÃO limpar carrinho aqui - só limpar após confirmação do pagamento
+        // O carrinho será limpo quando o pagamento for aprovado
+        // cart.items = [];
+        // await cart.save();
 
         await emailService.sendOrderConfirmation(req.user, order);
 

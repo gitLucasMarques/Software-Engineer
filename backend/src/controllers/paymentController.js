@@ -442,6 +442,14 @@ exports.createCardPayment = async (req, res) => {
         order.status = 'processing';
         await order.save();
 
+        // Limpar carrinho após pagamento aprovado
+        const Cart = require('../models/cart');
+        const cart = await Cart.findOne({ userId });
+        if (cart) {
+            cart.items = [];
+            await cart.save();
+        }
+
         res.status(200).json({
             status: 'success',
             data: {
@@ -482,6 +490,14 @@ exports.simulatePaymentApproval = async (req, res) => {
         order.paymentStatus = 'paid';
         order.status = 'processing';
         await order.save();
+
+        // Limpar carrinho após pagamento aprovado
+        const Cart = require('../models/cart');
+        const cart = await Cart.findOne({ userId });
+        if (cart) {
+            cart.items = [];
+            await cart.save();
+        }
 
         res.status(200).json({
             status: 'success',
