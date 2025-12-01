@@ -1,48 +1,46 @@
-const errorMiddleware = (err, req, res, next) => {
-    console.error('Error Stack:', err.stack);
 /**
  * Middleware global de tratamento de erros.
  * Ele captura qualquer erro lançado na aplicação e retorna respostas padronizadas.
- * Trata especificamente erros do Sequelize (validação, duplicidade, FK, conexão),
+ * Trata especificamente erros do Mongoose (validação, duplicidade, cast, conexão),
  * erros de JWT, erros de JSON malformado e erros operacionais customizados.
  * Para erros desconhecidos, retorna uma resposta genérica de erro interno,
  * exibindo detalhes adicionais apenas em ambiente de desenvolvimento.
  */
 
-    // Erro de validação do Sequelize
-    if (err.name === 'SequelizeValidationError') {
+const errorMiddleware = (err, req, res, next) => {
+    console.error('Error Stack:', err.stack);
+
+    // Erro de validação do Mongoose
+    if (err.name === 'ValidationError') {
         return res.status(400).json({
             status: 'fail',
             message: 'Erro de validação',
-            errors: err.errors.map(e => ({
+            errors: Object.values(err.errors).map(e => ({
                 field: e.path,
                 message: e.message
             }))
         });
     }
 
-    // Erro de constraint único do Sequelize
-    if (err.name === 'SequelizeUniqueConstraintError') {
+    // Erro de duplicação de chave única no MongoDB
+    if (err.code === 11000) {
+        const field = Object.keys(err.keyPattern)[0];
         return res.status(409).json({
             status: 'fail',
-            message: 'Registro duplicado',
-            errors: err.errors.map(e => ({
-                field: e.path,
-                message: e.message
-            }))
+            message: `Registro duplicado: ${field} já existe`
         });
     }
 
-    // Erro de FK do Sequelize
-    if (err.name === 'SequelizeForeignKeyConstraintError') {
+    // Erro de Cast (ID inválido) do Mongoose
+    if (err.name === 'CastError') {
         return res.status(400).json({
             status: 'fail',
-            message: 'Erro de relacionamento entre dados'
+            message: `ID inválido: ${err.value}`
         });
     }
 
-    // Erro de Database Connection
-    if (err.name === 'SequelizeConnectionError') {
+    // Erro de conexão com MongoDB
+    if (err.name === 'MongoNetworkError' || err.name === 'MongooseServerSelectionError') {
         return res.status(503).json({
             status: 'error',
             message: 'Erro de conexão com o banco de dados'

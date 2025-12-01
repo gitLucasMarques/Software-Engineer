@@ -1,6 +1,6 @@
 const path = require('path'); // Importa módulo nativo para manipular caminhos
-require('dotenv').config({ path: path.resolve(__dirname, '../.env.example') }); 
-// Carrega variáveis do arquivo .env.example, resolvendo o caminho corretamente
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env') }); 
+// Carrega variáveis do arquivo .env, resolvendo o caminho corretamente
 
 // Função auxiliar para buscar variáveis de ambiente com suporte a:
 // valor padrão, obrigatoriedade e validação
@@ -18,11 +18,8 @@ const environment = {
   NODE_ENV: process.env.NODE_ENV || 'development',
   PORT: process.env.PORT || 5000,
   
-  // Database (MySQL ou similar)
-  DB_HOST: process.env.DB_HOST || 'localhost',
-  DB_NAME: process.env.DB_NAME || 'game_ecommerce',
-  DB_USER: process.env.DB_USER || 'root',
-  DB_PASS: process.env.DB_PASS || '',
+  // Database MongoDB
+  MONGODB_URI: process.env.MONGODB_URI || 'mongodb://localhost:27017/game_ecommerce',
   
   // JWT (Autenticação)
   JWT_SECRET: process.env.JWT_SECRET || 'your-secret-key',

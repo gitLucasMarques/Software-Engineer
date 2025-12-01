@@ -22,13 +22,11 @@ exports.createReview = async (req, res) => {
         // Verifica se o usuário comprou o jogo
         const hasPurchased = await Order.findOne({
             userId,
-            paymentStatus: 'paid'
-        }).populate({
-            path: 'items',
-            match: { gameId }
+            paymentStatus: 'paid',
+            'items.productId': gameId
         });
 
-        if (!hasPurchased || !hasPurchased.items || hasPurchased.items.length === 0) {
+        if (!hasPurchased) {
             return res.status(403).json({ status: 'fail', message: 'Você deve comprar o jogo para poder avaliá-lo.' });
         }
 
