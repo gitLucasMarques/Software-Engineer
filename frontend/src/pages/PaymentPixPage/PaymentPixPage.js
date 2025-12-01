@@ -61,6 +61,15 @@ const PaymentPixPage = () => {
     try {
       await api.post(`/api/payments/simulate-approval/${orderId}`);
       toast.success('Pagamento simulado com sucesso!');
+      
+      // Limpar carrinho após pagamento aprovado
+      try {
+        await api.delete('/api/cart');
+      } catch (err) {
+        console.error('Erro ao limpar carrinho:', err);
+        // Não bloquear navegação se falhar
+      }
+      
       setTimeout(() => {
         navigate(`/payment/receipt/${orderId}`, { 
           state: { 

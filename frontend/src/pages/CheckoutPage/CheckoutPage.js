@@ -96,8 +96,8 @@ const CheckoutPage = () => {
 
       toast.success('Pedido criado com sucesso!');
 
-      // Limpar carrinho
-      await clearCart();
+      // NÃO limpar carrinho aqui - só limpar após confirmação do pagamento
+      // O carrinho será limpo nas páginas de pagamento após sucesso
 
       // Redirecionar baseado no método de pagamento
       switch (paymentMethod) {
