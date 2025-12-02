@@ -50,17 +50,19 @@ export const CartProvider = ({ children }) => {
   const addItem = async (productId, quantity = 1) => {
     try {
       const response = await api.post('/api/cart/items', { productId, quantity });
-      setCart(response.data.data);
+      setCart(response.data.data.cart || response.data.data);
       toast.success('Item adicionado ao carrinho!');
+      return true;
     } catch (error) {
       toast.error(error.response?.data?.message || 'Erro ao adicionar item');
+      throw error;
     }
   };
 
   const updateItem = async (itemId, quantity) => {
     try {
       const response = await api.put(`/api/cart/items/${itemId}`, { quantity });
-      setCart(response.data.data);
+      setCart(response.data.data.cart || response.data.data);
       toast.success('Carrinho atualizado!');
     } catch (error) {
       toast.error(error.response?.data?.message || 'Erro ao atualizar item');
@@ -70,7 +72,7 @@ export const CartProvider = ({ children }) => {
   const removeItem = async (itemId) => {
     try {
       const response = await api.delete(`/api/cart/items/${itemId}`);
-      setCart(response.data.data);
+      setCart(response.data.data.cart || response.data.data);
       toast.success('Item removido do carrinho!');
     } catch (error) {
       toast.error(error.response?.data?.message || 'Erro ao remover item');
@@ -79,8 +81,8 @@ export const CartProvider = ({ children }) => {
 
   const clearCart = async () => {
     try {
-      await api.delete('/api/cart');
-      setCart(null);
+      const response = await api.delete('/api/cart');
+      setCart(response.data.data.cart || response.data.data);
       toast.success('Carrinho limpo!');
     } catch (error) {
       toast.error(error.response?.data?.message || 'Erro ao limpar carrinho');

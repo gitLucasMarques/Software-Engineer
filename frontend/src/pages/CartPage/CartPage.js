@@ -1,9 +1,10 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../contexts/CartContext';
 import './CartPage.css';
 
 const CartPage = () => {
+  const navigate = useNavigate();
   const { cart, loading, itemCount, updateItem, removeItem, clearCart } = useCart();
 
   const handleQuantityChange = (itemId, newQuantity) => {
@@ -53,9 +54,9 @@ const CartPage = () => {
             <div className="empty-icon">🛒</div>
             <h2>Seu carrinho está vazio</h2>
             <p>Adicione jogos incríveis ao seu carrinho!</p>
-            <Link to="/products" className="btn btn-primary">
-              Explorar Jogos
-            </Link>
+            <button onClick={() => navigate('/')} className="btn btn-primary">
+              Ir para Home
+            </button>
           </div>
         </div>
       </div>
@@ -169,13 +170,19 @@ const CartPage = () => {
               <span>R$ {calculateTotal().toFixed(2)}</span>
             </div>
 
-            <Link to="/checkout" className="btn btn-primary btn-full">
+            <button 
+              onClick={() => navigate('/checkout')} 
+              className="btn btn-primary btn-full"
+            >
               Finalizar Compra
-            </Link>
+            </button>
 
-            <Link to="/products" className="btn btn-secondary btn-full">
+            <button 
+              onClick={() => navigate('/')} 
+              className="btn btn-secondary btn-full"
+            >
               Continuar Comprando
-            </Link>
+            </button>
           </div>
         </div>
       </div>

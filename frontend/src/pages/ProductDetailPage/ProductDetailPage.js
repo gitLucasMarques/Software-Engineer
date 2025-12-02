@@ -31,15 +31,33 @@ const ProductDetailPage = () => {
   }, [id]);
 
   const handleAddToCart = async () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    
     if (product) {
-      await addItem(product._id, 1);
+      try {
+        await addItem(product._id, 1);
+      } catch (error) {
+        console.error('Erro ao adicionar ao carrinho:', error);
+      }
     }
   };
 
   const handleBuyNow = async () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    
     if (product) {
-      await addItem(product._id, 1);
-      navigate('/cart');
+      try {
+        await addItem(product._id, 1);
+        navigate('/cart');
+      } catch (error) {
+        console.error('Erro ao comprar agora:', error);
+      }
     }
   };
 
