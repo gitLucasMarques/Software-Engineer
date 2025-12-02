@@ -81,7 +81,32 @@ const orderSchema = new mongoose.Schema({
     },
     paymentMethod: {
         type: String,
-        maxlength: 50
+        enum: ['pix', 'boleto', 'credit_card', 'debit_card'],
+        required: true
+    },
+    paymentDetails: {
+        // Para PIX
+        pixCode: String,
+        pixQRCode: String,
+        pixExpiresAt: Date,
+        
+        // Para Boleto
+        boletoCode: String,
+        boletoBarcode: String,
+        boletoDueDate: Date,
+        boletoInstallments: Number,
+        
+        // Para Cartão
+        cardLast4: String,
+        cardBrand: String,
+        cardType: String, // 'credit' ou 'debit'
+        cardInstallments: Number,
+        cardHolderName: String,
+        
+        // Comum
+        transactionId: String,
+        paymentDate: Date,
+        receiptUrl: String
     },
     notes: {
         type: String

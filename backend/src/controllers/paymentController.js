@@ -1,356 +1,468 @@
 /**
- * Controlador de Pagamentos Simulados
+ * Controlador de Pagamentos - Sistema Completo de Checkout
  * 
- * Gerencia todas as formas de pagamento:
- * - PIX: Gera QR Code e simula pagamento
- * - Boleto: Gera linha digitável e simula pagamento
- * - Cartão de Crédito: Processa e salva cartão
- * - Cartão de Débito: Processa e salva cartão
+ * Implementa 4 métodos de pagamento:
+ * 1. PIX - Gera QR Code e código para cópia
+ * 2. Boleto - Gera código de barras com opção de parcelas
+ * 3. Cartão de Crédito - Salva cartão e permite parcelamento
+ * 4. Cartão de Débito - Salva cartão (sem parcelamento)
  * 
- * Todos os pagamentos geram pedidos e comprovantes completos
+ * Todos geram comprovante/nota fiscal após pagamento
  */
 
-const { Order, Payment, Cart } = require('../models');
-const paymentService = require('../services/paymentService');
-const pixBoletoService = require('../services/pixBoletoService');
-const PaymentCard = require('../models/paymentCard');
+const { Order, Cart, PaymentCard } = require('../models');
+const crypto = require('crypto');
 
+// ==================== PIX ====================
 exports.createPixPayment = async (req, res) => {
     try {
         const { orderId } = req.body;
         const userId = req.user._id;
 
-        console.log('🔵 [PIX] Requisição recebida');
-        console.log('👤 User ID:', userId);
-        console.log('📦 Order ID:', orderId);
-
-        if (!orderId) {
-            console.error('❌ [PIX] Order ID não fornecido');
-            return res.status(400).json({ status: 'fail', message: 'O ID do pedido é obrigatório.' });
-        }
-
-        const order = await Order.findById(orderId).populate('userId').populate('items.productId');
+        const order = await Order.findById(orderId)
+            .populate('userId')
+            .populate('items.productId');
 
         if (!order) {
-            console.error('❌ [PIX] Pedido não encontrado:', orderId);
             return res.status(404).json({ status: 'fail', message: 'Pedido não encontrado.' });
         }
 
-        console.log('✅ [PIX] Pedido encontrado:', order._id);
-
         if (order.userId._id.toString() !== userId.toString()) {
-            console.error('❌ [PIX] Acesso negado - usuário não é dono do pedido');
             return res.status(403).json({ status: 'fail', message: 'Acesso negado a este pedido.' });
         }
 
         if (order.paymentStatus === 'paid') {
-            console.warn('⚠️  [PIX] Pedido já foi pago');
             return res.status(400).json({ status: 'fail', message: 'Este pedido já foi pago.' });
         }
 
-        console.log('🚀 [PIX] Gerando código PIX...');
-        const result = await paymentService.processPixPayment(order);
+        // Gerar código PIX simulado
+        const pixCode = generatePixCode(order.totalAmount);
+        const pixQRCode = generateQRCodeData(pixCode);
+        const transactionId = generateTransactionId();
+        const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 minutos
 
-        console.log('✅ [PIX] Código gerado com sucesso');
-
-        res.status(200).json({
-            status: 'success',
-            data: {
-                payment: result.payment,
-                pixData: result.pixData,
-                message: 'Código PIX gerado com sucesso. Escaneie o QR Code para pagar.'
-            }
-        });
-
-    } catch (error) {
-        console.error('❌ [PIX] Erro ao criar pagamento PIX:', error);
-        console.error('Stack:', error.stack);
-        res.status(500).json({
-            status: 'error',
-            message: error.message || 'Erro ao criar pagamento PIX.'
-        });
-    }
-};
-
-exports.createBoletoPayment = async (req, res) => {
-    try {
-        const { orderId, installments = 1 } = req.body;
-        const userId = req.user._id;
-
-        console.log('🔵 [BOLETO] Requisição recebida');
-        console.log('👤 User ID:', userId);
-        console.log('📦 Order ID:', orderId);
-        console.log('💳 Installments:', installments);
-
-        if (!orderId) {
-            console.error('❌ [BOLETO] Order ID não fornecido');
-            return res.status(400).json({ status: 'fail', message: 'O ID do pedido é obrigatório.' });
-        }
-
-        const order = await Order.findById(orderId).populate('userId').populate('items.productId');
-
-        if (!order) {
-            console.error('❌ [BOLETO] Pedido não encontrado:', orderId);
-            return res.status(404).json({ status: 'fail', message: 'Pedido não encontrado.' });
-        }
-
-        console.log('✅ [BOLETO] Pedido encontrado:', order._id);
-
-        if (order.userId._id.toString() !== userId.toString()) {
-            console.error('❌ [BOLETO] Acesso negado - usuário não é dono do pedido');
-            return res.status(403).json({ status: 'fail', message: 'Acesso negado a este pedido.' });
-        }
-
-        if (order.paymentStatus === 'paid') {
-            console.warn('⚠️  [BOLETO] Pedido já foi pago');
-            return res.status(400).json({ status: 'fail', message: 'Este pedido já foi pago.' });
-        }
-
-        console.log('🚀 [BOLETO] Gerando boleto...');
-        const result = await paymentService.processBoletoPayment(order, installments);
-
-        console.log('✅ [BOLETO] Boleto gerado com sucesso');
-
-        res.status(200).json({
-            status: 'success',
-            data: {
-                payment: result.payment,
-                boletoData: result.boletoData,
-                message: 'Boleto gerado com sucesso. Pague até a data de vencimento.'
-            }
-        });
-
-    } catch (error) {
-        console.error('❌ [BOLETO] Erro ao criar boleto:', error);
-        console.error('Stack:', error.stack);
-        res.status(500).json({
-            status: 'error',
-            message: error.message || 'Erro ao criar boleto.'
-        });
-    }
-};
-
-exports.createCardPayment = async (req, res) => {
-    try {
-        const { orderId, cardId, cardData, installments = 1, paymentType = 'credit', saveCard = false } = req.body;
-        const userId = req.user._id;
-
-        console.log('🔵 [CARD] Requisição recebida');
-        console.log('👤 User ID:', userId);
-        console.log('📦 Order ID:', orderId);
-        console.log('💳 Payment Type:', paymentType);
-        console.log('💰 Installments:', installments);
-        console.log('💾 Save Card:', saveCard);
-
-        // Validação de parcelas mínimas (R$ 5,00 por parcela)
-        if (installments > 1) {
-            const minInstallmentAmount = 5.00;
-            const order = await Order.findById(orderId);
-            if (order && (order.totalAmount / installments) < minInstallmentAmount) {
-                return res.status(400).json({ 
-                    status: 'fail', 
-                    message: `Valor mínimo de R$ ${minInstallmentAmount.toFixed(2)} por parcela não atingido.` 
-                });
-            }
-        }
-
-        if (!orderId) {
-            console.error('❌ [CARD] Order ID não fornecido');
-            return res.status(400).json({ status: 'fail', message: 'O ID do pedido é obrigatório.' });
-        }
-
-        if (!cardId && !cardData) {
-            console.error('❌ [CARD] Dados do cartão não fornecidos');
-            return res.status(400).json({ status: 'fail', message: 'Dados do cartão são obrigatórios.' });
-        }
-
-        const order = await Order.findById(orderId).populate('userId').populate('items.productId');
-
-        if (!order) {
-            console.error('❌ [CARD] Pedido não encontrado:', orderId);
-            return res.status(404).json({ status: 'fail', message: 'Pedido não encontrado.' });
-        }
-
-        console.log('✅ [CARD] Pedido encontrado:', order._id);
-
-        if (order.userId._id.toString() !== userId.toString()) {
-            console.error('❌ [CARD] Acesso negado - usuário não é dono do pedido');
-            return res.status(403).json({ status: 'fail', message: 'Acesso negado a este pedido.' });
-        }
-
-        if (order.paymentStatus === 'paid') {
-            console.warn('⚠️  [CARD] Pedido já foi pago');
-            return res.status(400).json({ status: 'fail', message: 'Este pedido já foi pago.' });
-        }
-
-        let cardInfo = cardData;
-        let savedCard = null;
-
-        // Se usar cartão salvo
-        if (cardId) {
-            console.log('🔵 [CARD] Usando cartão salvo:', cardId);
-            const card = await PaymentCard.findOne({ _id: cardId, userId: userId });
-            
-            if (!card) {
-                console.error('❌ [CARD] Cartão salvo não encontrado');
-                return res.status(404).json({ status: 'fail', message: 'Cartão não encontrado.' });
-            }
-
-            cardInfo = {
-                cardNumber: card.getDecryptedCardNumber(),
-                cardHolderName: card.cardHolderName,
-                expiryMonth: card.expiryMonth,
-                expiryYear: card.expiryYear,
-                cvv: req.body.cvv
-            };
-
-            if (!cardInfo.cvv) {
-                console.error('❌ [CARD] CVV não fornecido');
-                return res.status(400).json({ status: 'fail', message: 'CVV é obrigatório ao usar cartão salvo.' });
-            }
-        } else {
-            console.log('🔵 [CARD] Usando novo cartão');
-            
-            // Salvar cartão se solicitado
-            if (saveCard) {
-                console.log('💾 [CARD] Salvando cartão no perfil...');
-                savedCard = await paymentService.saveUserCard(userId, cardInfo, false);
-                console.log('✅ [CARD] Cartão salvo:', savedCard._id);
-            }
-        }
-
-        console.log('🚀 [CARD] Processando pagamento...');
-        const result = await paymentService.processCardPayment(order, cardInfo, installments, paymentType);
-
-        console.log('✅ [CARD] Pagamento aprovado');
-
-        // Gerar comprovante
-        const receipt = await paymentService.generateReceipt(order, result.payment);
-
-        res.status(200).json({
-            status: 'success',
-            data: {
-                payment: result.payment,
-                paymentResult: result.paymentResult,
-                receipt: receipt,
-                savedCard: savedCard ? {
-                    id: savedCard._id,
-                    maskedNumber: savedCard.getMaskedCardNumber(),
-                    brand: savedCard.cardBrand
-                } : null,
-                message: 'Pagamento aprovado com sucesso!'
-            }
-        });
-
-    } catch (error) {
-        console.error('❌ [CARD] Erro ao processar pagamento com cartão:', error);
-        console.error('Stack:', error.stack);
-        res.status(500).json({
-            status: 'error',
-            message: error.message || 'Erro ao processar pagamento com cartão.'
-        });
-    }
-};
-
-exports.simulatePaymentApproval = async (req, res) => {
-    try {
-        const { orderId } = req.params;
-        const userId = req.user._id;
-
-        console.log('🔵 [SIMULATE] Requisição recebida');
-        console.log('👤 User ID:', userId);
-        console.log('📦 Order ID:', orderId);
-
-        const result = await paymentService.simulatePaymentApproval(orderId, userId);
-
-        console.log('✅ [SIMULATE] Simulação concluída com sucesso');
-
-        res.status(200).json({
-            status: 'success',
-            data: {
-                payment: result.payment,
-                order: result.order,
-                receipt: result.receipt,
-                message: 'Pagamento aprovado com sucesso! Pedido em processamento.'
-            }
-        });
-
-    } catch (error) {
-        console.error('❌ [SIMULATE] Erro ao simular aprovação:', error);
-        console.error('Stack:', error.stack);
-        res.status(500).json({
-            status: 'error',
-            message: error.message || 'Erro ao simular aprovação.'
-        });
-    }
-};
-
-exports.getPaymentStatus = async (req, res) => {
-    try {
-        const { orderId } = req.params;
-        const userId = req.user._id;
-
-        const order = await Order.findOne({ _id: orderId, userId: userId });
-
-        if (!order) {
-            return res.status(404).json({ status: 'fail', message: 'Pedido não encontrado ou não pertence a este usuário.' });
-        }
-
-        const payment = await Payment.findOne({ orderId: order._id });
+        // Atualizar pedido com dados do PIX
+        order.paymentMethod = 'pix';
+        order.paymentDetails = {
+            pixCode,
+            pixQRCode,
+            pixExpiresAt: expiresAt,
+            transactionId
+        };
+        await order.save();
 
         res.status(200).json({
             status: 'success',
             data: {
                 orderId: order._id,
-                orderStatus: order.status,
-                paymentStatus: order.paymentStatus,
-                payment: payment
+                pixCode,
+                pixQRCode,
+                amount: order.totalAmount,
+                expiresAt,
+                transactionId,
+                message: 'Código PIX gerado. Realize o pagamento para confirmar o pedido.'
             }
         });
 
     } catch (error) {
-        console.error('❌ Erro ao verificar status:', error);
+        console.error('Erro ao criar pagamento PIX:', error);
         res.status(500).json({
             status: 'error',
-            message: 'Erro ao verificar o status do pagamento.'
+            message: 'Erro ao gerar pagamento PIX.'
         });
     }
 };
 
-exports.getReceipt = async (req, res) => {
+exports.confirmPixPayment = async (req, res) => {
     try {
-        const { orderId } = req.params;
+        const { orderId } = req.body;
         const userId = req.user._id;
 
-        console.log('🔵 [RECEIPT] Requisição recebida');
-        console.log('👤 User ID:', userId);
-        console.log('📦 Order ID:', orderId);
-
-        const order = await Order.findOne({ _id: orderId, userId: userId }).populate('items.productId');
+        const order = await Order.findById(orderId)
+            .populate('userId')
+            .populate('items.productId');
 
         if (!order) {
             return res.status(404).json({ status: 'fail', message: 'Pedido não encontrado.' });
         }
 
-        const payment = await Payment.findOne({ orderId: order._id });
-
-        if (!payment) {
-            return res.status(404).json({ status: 'fail', message: 'Pagamento não encontrado.' });
+        if (order.userId._id.toString() !== userId.toString()) {
+            return res.status(403).json({ status: 'fail', message: 'Acesso negado.' });
         }
 
-        const receipt = await paymentService.generateReceipt(order, payment);
+        // Simular confirmação de pagamento
+        order.paymentStatus = 'paid';
+        order.status = 'processing';
+        order.paymentDetails.paymentDate = new Date();
+        await order.save();
 
-        console.log('✅ [RECEIPT] Comprovante gerado');
+        // Limpar carrinho após pagamento confirmado
+        await Cart.findOneAndUpdate(
+            { userId },
+            { $set: { items: [] } }
+        );
 
         res.status(200).json({
             status: 'success',
             data: {
-                receipt: receipt
+                order,
+                message: 'Pagamento confirmado com sucesso!'
             }
         });
 
     } catch (error) {
-        console.error('❌ [RECEIPT] Erro ao gerar comprovante:', error);
+        console.error('Erro ao confirmar pagamento PIX:', error);
+        res.status(500).json({
+            status: 'error',
+            message: 'Erro ao confirmar pagamento.'
+        });
+    }
+};
+
+// ==================== BOLETO ====================
+exports.createBoletoPayment = async (req, res) => {
+    try {
+        const { orderId, installments = 1 } = req.body;
+        const userId = req.user._id;
+
+        if (installments < 1 || installments > 12) {
+            return res.status(400).json({ 
+                status: 'fail', 
+                message: 'Parcelas inválidas. Escolha entre 1 e 12.' 
+            });
+        }
+
+        const order = await Order.findById(orderId)
+            .populate('userId')
+            .populate('items.productId');
+
+        if (!order) {
+            return res.status(404).json({ status: 'fail', message: 'Pedido não encontrado.' });
+        }
+
+        if (order.userId._id.toString() !== userId.toString()) {
+            return res.status(403).json({ status: 'fail', message: 'Acesso negado.' });
+        }
+
+        if (order.paymentStatus === 'paid') {
+            return res.status(400).json({ status: 'fail', message: 'Este pedido já foi pago.' });
+        }
+
+        // Gerar boleto simulado
+        const boletoCode = generateBoletoCode();
+        const boletoBarcode = generateBoletoBarcode();
+        const transactionId = generateTransactionId();
+        const dueDate = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000); // 3 dias
+        const installmentAmount = order.totalAmount / installments;
+
+        // Atualizar pedido com dados do boleto
+        order.paymentMethod = 'boleto';
+        order.paymentDetails = {
+            boletoCode,
+            boletoBarcode,
+            boletoDueDate: dueDate,
+            boletoInstallments: installments,
+            transactionId
+        };
+        await order.save();
+
+        res.status(200).json({
+            status: 'success',
+            data: {
+                orderId: order._id,
+                boletoCode,
+                boletoBarcode,
+                amount: order.totalAmount,
+                installments,
+                installmentAmount: installmentAmount.toFixed(2),
+                dueDate,
+                transactionId,
+                message: 'Boleto gerado. Pague até a data de vencimento.'
+            }
+        });
+
+    } catch (error) {
+        console.error('Erro ao criar boleto:', error);
+        res.status(500).json({
+            status: 'error',
+            message: 'Erro ao gerar boleto.'
+        });
+    }
+};
+
+exports.confirmBoletoPayment = async (req, res) => {
+    try {
+        const { orderId } = req.body;
+        const userId = req.user._id;
+
+        const order = await Order.findById(orderId)
+            .populate('userId')
+            .populate('items.productId');
+
+        if (!order) {
+            return res.status(404).json({ status: 'fail', message: 'Pedido não encontrado.' });
+        }
+
+        if (order.userId._id.toString() !== userId.toString()) {
+            return res.status(403).json({ status: 'fail', message: 'Acesso negado.' });
+        }
+
+        // Simular confirmação de pagamento
+        order.paymentStatus = 'paid';
+        order.status = 'processing';
+        order.paymentDetails.paymentDate = new Date();
+        await order.save();
+
+        // Limpar carrinho
+        await Cart.findOneAndUpdate(
+            { userId },
+            { $set: { items: [] } }
+        );
+
+        res.status(200).json({
+            status: 'success',
+            data: {
+                order,
+                message: 'Pagamento do boleto confirmado!'
+            }
+        });
+
+    } catch (error) {
+        console.error('Erro ao confirmar boleto:', error);
+        res.status(500).json({
+            status: 'error',
+            message: 'Erro ao confirmar pagamento.'
+        });
+    }
+};
+
+// ==================== CARTÃO ====================
+exports.createCardPayment = async (req, res) => {
+    try {
+        const { 
+            orderId, 
+            cardId, 
+            cardType, // 'credit_card' ou 'debit_card'
+            installments = 1,
+            // Se for cartão novo:
+            newCard 
+        } = req.body;
+        
+        const userId = req.user._id;
+
+        // Validações
+        if (!['credit_card', 'debit_card'].includes(cardType)) {
+            return res.status(400).json({ 
+                status: 'fail', 
+                message: 'Tipo de cartão inválido.' 
+            });
+        }
+
+        if (cardType === 'debit_card' && installments > 1) {
+            return res.status(400).json({ 
+                status: 'fail', 
+                message: 'Cartão de débito não permite parcelamento.' 
+            });
+        }
+
+        if (cardType === 'credit_card' && (installments < 1 || installments > 12)) {
+            return res.status(400).json({ 
+                status: 'fail', 
+                message: 'Parcelas inválidas. Escolha entre 1 e 12.' 
+            });
+        }
+
+        const order = await Order.findById(orderId)
+            .populate('userId')
+            .populate('items.productId');
+
+        if (!order) {
+            return res.status(404).json({ status: 'fail', message: 'Pedido não encontrado.' });
+        }
+
+        if (order.userId._id.toString() !== userId.toString()) {
+            return res.status(403).json({ status: 'fail', message: 'Acesso negado.' });
+        }
+
+        if (order.paymentStatus === 'paid') {
+            return res.status(400).json({ status: 'fail', message: 'Este pedido já foi pago.' });
+        }
+
+        let card;
+
+        // Se é um cartão novo, salvar
+        if (newCard) {
+            card = new PaymentCard({
+                userId,
+                cardNumber: newCard.cardNumber,
+                cardHolderName: newCard.cardHolderName,
+                expiryMonth: newCard.expiryMonth,
+                expiryYear: newCard.expiryYear,
+                cvv: newCard.cvv,
+                isDefault: newCard.isDefault || false
+            });
+            await card.save();
+        } else if (cardId) {
+            // Buscar cartão existente
+            card = await PaymentCard.findOne({ _id: cardId, userId });
+            if (!card) {
+                return res.status(404).json({ 
+                    status: 'fail', 
+                    message: 'Cartão não encontrado.' 
+                });
+            }
+        } else {
+            return res.status(400).json({ 
+                status: 'fail', 
+                message: 'Forneça um cartão existente ou cadastre um novo.' 
+            });
+        }
+
+        const transactionId = generateTransactionId();
+        const installmentAmount = order.totalAmount / installments;
+
+        // Atualizar pedido com dados do cartão
+        order.paymentMethod = cardType;
+        order.paymentDetails = {
+            cardLast4: card.lastFourDigits,
+            cardBrand: card.cardBrand,
+            cardType,
+            cardInstallments: installments,
+            cardHolderName: card.cardHolderName,
+            transactionId,
+            paymentDate: new Date()
+        };
+        order.paymentStatus = 'paid';
+        order.status = 'processing';
+        await order.save();
+
+        // Limpar carrinho
+        await Cart.findOneAndUpdate(
+            { userId },
+            { $set: { items: [] } }
+        );
+
+        res.status(200).json({
+            status: 'success',
+            data: {
+                order,
+                cardLast4: card.lastFourDigits,
+                cardBrand: card.cardBrand,
+                installments,
+                installmentAmount: installmentAmount.toFixed(2),
+                transactionId,
+                message: 'Pagamento processado com sucesso!',
+                savedCard: !!cardId // Indica se usou cartão salvo
+            }
+        });
+
+    } catch (error) {
+        console.error('Erro ao processar pagamento com cartão:', error);
+        res.status(500).json({
+            status: 'error',
+            message: 'Erro ao processar pagamento.'
+        });
+    }
+};
+
+// ==================== CARTÕES SALVOS ====================
+exports.getUserCards = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const cards = await PaymentCard.find({ userId }).select('-cardNumber -cvv');
+
+        res.status(200).json({
+            status: 'success',
+            results: cards.length,
+            data: { cards }
+        });
+
+    } catch (error) {
+        console.error('Erro ao buscar cartões:', error);
+        res.status(500).json({
+            status: 'error',
+            message: 'Erro ao buscar cartões salvos.'
+        });
+    }
+};
+
+exports.deleteCard = async (req, res) => {
+    try {
+        const { cardId } = req.params;
+        const userId = req.user._id;
+
+        const card = await PaymentCard.findOneAndDelete({ _id: cardId, userId });
+
+        if (!card) {
+            return res.status(404).json({ 
+                status: 'fail', 
+                message: 'Cartão não encontrado.' 
+            });
+        }
+
+        res.status(200).json({
+            status: 'success',
+            message: 'Cartão removido com sucesso.'
+        });
+
+    } catch (error) {
+        console.error('Erro ao remover cartão:', error);
+        res.status(500).json({
+            status: 'error',
+            message: 'Erro ao remover cartão.'
+        });
+    }
+};
+
+// ==================== COMPROVANTE ====================
+exports.getReceipt = async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        const userId = req.user._id;
+
+        const order = await Order.findById(orderId)
+            .populate('userId')
+            .populate('items.productId');
+
+        if (!order) {
+            return res.status(404).json({ status: 'fail', message: 'Pedido não encontrado.' });
+        }
+
+        if (order.userId._id.toString() !== userId.toString()) {
+            return res.status(403).json({ status: 'fail', message: 'Acesso negado.' });
+        }
+
+        // Gerar dados do comprovante
+        const receipt = {
+            orderId: order._id,
+            transactionId: order.paymentDetails?.transactionId,
+            date: order.paymentDetails?.paymentDate || order.createdAt,
+            paymentMethod: order.paymentMethod,
+            paymentStatus: order.paymentStatus,
+            orderStatus: order.status,
+            customer: {
+                name: order.shippingAddress.fullName,
+                email: order.shippingAddress.email,
+                phone: order.shippingAddress.phone
+            },
+            items: order.items.map(item => ({
+                name: item.productId.name,
+                quantity: item.quantity,
+                price: item.price,
+                total: item.quantity * item.price
+            })),
+            shippingAddress: order.shippingAddress,
+            totalAmount: order.totalAmount,
+            paymentDetails: order.paymentDetails
+        };
+
+        res.status(200).json({
+            status: 'success',
+            data: { receipt }
+        });
+
+    } catch (error) {
+        console.error('Erro ao gerar comprovante:', error);
         res.status(500).json({
             status: 'error',
             message: 'Erro ao gerar comprovante.'
@@ -358,139 +470,41 @@ exports.getReceipt = async (req, res) => {
     }
 };
 
-// ===== GERENCIAMENTO DE CARTÕES =====
+// ==================== FUNÇÕES AUXILIARES ====================
 
-exports.getUserCards = async (req, res) => {
-    try {
-        const userId = req.user._id;
+function generatePixCode(amount) {
+    // Simula código PIX Copia e Cola
+    const timestamp = Date.now().toString(36);
+    const random = Math.random().toString(36).substring(2, 15);
+    const amountStr = amount.toFixed(2).replace('.', '');
+    return `00020126360014BR.GOV.BCB.PIX0114+5511999999999520400005303986540${amountStr}5802BR5925GAME ECOMMERCE LTDA6009SAO PAULO62070503***6304${random.toUpperCase()}`;
+}
 
-        console.log('🔵 [CARDS] Buscando cartões do usuário:', userId);
+function generateQRCodeData(pixCode) {
+    // Retorna uma URL base64 simulada de QR Code
+    // Em produção, use uma biblioteca como 'qrcode' para gerar o QR real
+    return `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==`;
+}
 
-        const cards = await paymentService.getUserCards(userId);
+function generateBoletoCode() {
+    // Gera linha digitável do boleto (47 dígitos)
+    const part1 = '23793';
+    const part2 = Math.floor(Math.random() * 100000).toString().padStart(5, '0');
+    const part3 = Math.floor(Math.random() * 100000).toString().padStart(5, '0');
+    const part4 = Math.floor(Math.random() * 100000).toString().padStart(5, '0');
+    const part5 = Math.floor(Math.random() * 10).toString();
+    const part6 = Math.floor(Math.random() * 10000000000000).toString().padStart(14, '0');
+    
+    return `${part1}.${part2} ${part3}.${part4} ${part5} ${part6}`;
+}
 
-        // Retornar apenas dados seguros
-        const safeCards = cards.map(card => ({
-            id: card._id,
-            maskedNumber: card.getMaskedCardNumber(),
-            cardHolderName: card.cardHolderName,
-            expiryMonth: card.expiryMonth,
-            expiryYear: card.expiryYear,
-            cardBrand: card.cardBrand,
-            isDefault: card.isDefault,
-            createdAt: card.createdAt
-        }));
+function generateBoletoBarcode() {
+    // Gera código de barras (44 dígitos numéricos)
+    return Array.from({ length: 44 }, () => Math.floor(Math.random() * 10)).join('');
+}
 
-        console.log('✅ [CARDS] Encontrados', safeCards.length, 'cartões');
+function generateTransactionId() {
+    return `TXN${Date.now()}${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
+}
 
-        res.status(200).json({
-            status: 'success',
-            results: safeCards.length,
-            data: {
-                cards: safeCards
-            }
-        });
-
-    } catch (error) {
-        console.error('❌ [CARDS] Erro ao buscar cartões:', error);
-        res.status(500).json({
-            status: 'error',
-            message: 'Erro ao buscar cartões.'
-        });
-    }
-};
-
-exports.saveCard = async (req, res) => {
-    try {
-        const userId = req.user._id;
-        const { cardData, isDefault = false } = req.body;
-
-        console.log('🔵 [CARDS] Salvando cartão para usuário:', userId);
-
-        if (!cardData || !cardData.cardNumber || !cardData.cardHolderName || !cardData.expiryMonth || !cardData.expiryYear) {
-            return res.status(400).json({ status: 'fail', message: 'Dados do cartão incompletos.' });
-        }
-
-        const card = await paymentService.saveUserCard(userId, cardData, isDefault);
-
-        console.log('✅ [CARDS] Cartão salvo:', card._id);
-
-        res.status(201).json({
-            status: 'success',
-            data: {
-                card: {
-                    id: card._id,
-                    maskedNumber: card.getMaskedCardNumber(),
-                    cardHolderName: card.cardHolderName,
-                    expiryMonth: card.expiryMonth,
-                    expiryYear: card.expiryYear,
-                    cardBrand: card.cardBrand,
-                    isDefault: card.isDefault
-                },
-                message: 'Cartão salvo com sucesso!'
-            }
-        });
-
-    } catch (error) {
-        console.error('❌ [CARDS] Erro ao salvar cartão:', error);
-        res.status(500).json({
-            status: 'error',
-            message: error.message || 'Erro ao salvar cartão.'
-        });
-    }
-};
-
-exports.deleteCard = async (req, res) => {
-    try {
-        const userId = req.user._id;
-        const { cardId } = req.params;
-
-        console.log('🔵 [CARDS] Removendo cartão:', cardId);
-
-        await paymentService.deleteUserCard(userId, cardId);
-
-        console.log('✅ [CARDS] Cartão removido');
-
-        res.status(200).json({
-            status: 'success',
-            message: 'Cartão removido com sucesso!'
-        });
-
-    } catch (error) {
-        console.error('❌ [CARDS] Erro ao remover cartão:', error);
-        res.status(500).json({
-            status: 'error',
-            message: error.message || 'Erro ao remover cartão.'
-        });
-    }
-};
-
-// ===== MÉTODOS DESCONTINUADOS =====
-
-exports.createPaymentIntent = async (req, res) => {
-    res.status(501).json({
-        status: 'error',
-        message: 'Método não implementado. Use os endpoints específicos: /pix/create, /boleto/create ou /card/create'
-    });
-};
-
-exports.createMercadoPagoPayment = async (req, res) => {
-    res.status(501).json({
-        status: 'error',
-        message: 'MercadoPago não está mais implementado. Use os métodos de pagamento disponíveis: PIX, Boleto ou Cartão.'
-    });
-};
-
-exports.createPayPalPayment = async (req, res) => {
-    res.status(501).json({
-        status: 'error',
-        message: 'PayPal não está mais implementado. Use os métodos de pagamento disponíveis: PIX, Boleto ou Cartão.'
-    });
-};
-
-exports.handleMercadoPagoWebhook = async (req, res) => {
-    res.status(501).send('Webhook não implementado');
-};
-
-exports.handlePayPalWebhook = async (req, res) => {
-    res.status(501).send('Webhook não implementado');
-};
+module.exports = exports;

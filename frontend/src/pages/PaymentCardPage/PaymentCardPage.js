@@ -1,419 +1,224 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import api from '../../services/api';
 import { toast } from 'react-toastify';
 import './PaymentCardPage.css';
 
 const PaymentCardPage = () => {
-  const location = useLocation();
+  const { orderId } = useParams();
   const navigate = useNavigate();
-  const { orderId, paymentType = 'credit' } = location.state || {}; // credit or debit
+  const location = useLocation();
+  const cardType = location.state?.cardType || 'credit_card';
   
   const [savedCards, setSavedCards] = useState([]);
   const [selectedCard, setSelectedCard] = useState(null);
-  const [useNewCard, setUseNewCard] = useState(false);
   const [installments, setInstallments] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [processing, setProcessing] = useState(false);
-  
-  const [cardData, setCardData] = useState({
+  const [showNewCardForm, setShowNewCardForm] = useState(false);
+  const [newCard, setNewCard] = useState({
     cardNumber: '',
     cardHolderName: '',
     expiryMonth: '',
     expiryYear: '',
     cvv: '',
-    saveCard: false
+    isDefault: false
   });
 
   useEffect(() => {
-    if (!orderId) {
-      toast.error('Pedido não encontrado');
-      navigate('/cart');
-      return;
-    }
+    loadSavedCards();
+  }, []);
 
-    fetchSavedCards();
-  }, [orderId]);
-
-  const fetchSavedCards = async () => {
+  const loadSavedCards = async () => {
     try {
-      setLoading(true);
-      console.log('🔵 Buscando cartões salvos...');
-      const response = await api.get('/api/cards');
-      console.log('✅ Cartões carregados:', response.data);
-      const cards = response.data.data.cards || [];
-      setSavedCards(cards);
-      
-      // Selecionar cartão padrão automaticamente
-      const defaultCard = cards.find(c => c.isDefault);
-      if (defaultCard) {
-        setSelectedCard(defaultCard._id);
-      } else if (cards.length === 0) {
-        setUseNewCard(true);
-      }
+      const res = await api.get('/api/payments/cards');
+      setSavedCards(res.data.data.cards || []);
     } catch (error) {
-      console.error('Erro ao buscar cartões:', error);
-      setUseNewCard(true); // Se não conseguir buscar, usar novo cartão
-    } finally {
-      setLoading(false);
+      console.error('Erro ao carregar cartões');
     }
   };
 
-  const handleCardDataChange = (e) => {
-    let { name, value, type, checked } = e.target;
-    
-    if (name === 'cardNumber') {
-      value = value.replace(/\D/g, '').substring(0, 16);
-      value = value.replace(/(\d{4})(?=\d)/g, '$1 ');
-    }
-    
-    if (name === 'expiryMonth' || name === 'expiryYear') {
-      value = value.replace(/\D/g, '');
-    }
-    
-    if (name === 'cvv') {
-      value = value.replace(/\D/g, '').substring(0, 4);
-    }
-    
-    setCardData({
-      ...cardData,
-      [name]: type === 'checkbox' ? checked : value
-    });
+  const handleCardChange = (e) => {
+    setNewCard({ ...newCard, [e.target.name]: e.target.value });
   };
 
-  const validateCardData = () => {
-    if (useNewCard) {
-      const { cardNumber, cardHolderName, expiryMonth, expiryYear, cvv } = cardData;
-      
-      if (!cardNumber || cardNumber.replace(/\s/g, '').length !== 16) {
-        toast.error('Número do cartão inválido');
-        return false;
-      }
-      
-      if (!cardHolderName) {
-        toast.error('Nome do titular é obrigatório');
-        return false;
-      }
-      
-      const month = parseInt(expiryMonth);
-      if (!month || month < 1 || month > 12) {
-        toast.error('Mês de validade inválido');
-        return false;
-      }
-      
-      const year = parseInt(expiryYear);
-      const currentYear = new Date().getFullYear() % 100;
-      if (!year || year < currentYear) {
-        toast.error('Ano de validade inválido');
-        return false;
-      }
-      
-      if (!cvv || cvv.length < 3) {
-        toast.error('CVV inválido');
-        return false;
-      }
-    } else {
-      if (!selectedCard) {
-        toast.error('Selecione um cartão');
-        return false;
-      }
-      
-      if (!cardData.cvv || cardData.cvv.length < 3) {
-        toast.error('CVV é obrigatório');
-        return false;
-      }
-    }
-    
-    return true;
-  };
-
-  const handleSubmit = async (e) => {
+  const processPayment = async (e) => {
     e.preventDefault();
     
-    if (!validateCardData()) {
-      return;
-    }
-    
     try {
-      setProcessing(true);
-      
-      const payload = {
+      const paymentData = {
         orderId,
-        installments,
-        paymentType
+        cardType,
+        installments: cardType === 'debit_card' ? 1 : installments
       };
-      
-      if (useNewCard) {
-        payload.cardData = {
-          cardNumber: cardData.cardNumber.replace(/\s/g, ''),
-          cardHolderName: cardData.cardHolderName,
-          expiryMonth: cardData.expiryMonth.padStart(2, '0'),
-          expiryYear: cardData.expiryYear,
-          cvv: cardData.cvv
-        };
-        
-        // Salvar o cartão automaticamente para uso futuro
-        console.log('🔄 Tentando salvar cartão automaticamente...');
-        try {
-          const cardToSave = {
-            cardNumber: payload.cardData.cardNumber,
-            cardHolderName: payload.cardData.cardHolderName,
-            expiryMonth: payload.cardData.expiryMonth,
-            expiryYear: payload.cardData.expiryYear,
-            cvv: payload.cardData.cvv,
-            setAsDefault: savedCards.length === 0
-          };
-          console.log('📤 Dados do cartão a salvar:', { ...cardToSave, cardNumber: '****', cvv: '***' });
-          
-          const saveResponse = await api.post('/api/cards', cardToSave);
-          console.log('✅ Cartão salvo com sucesso!', saveResponse.data);
-          toast.success('Cartão salvo para futuras compras!');
-          
-          // Atualizar lista de cartões salvos
-          await fetchSavedCards();
-        } catch (error) {
-          console.error('❌ Erro ao salvar cartão:', error);
-          console.error('Detalhes do erro:', error.response?.data);
-          toast.warn('Não foi possível salvar o cartão, mas o pagamento continuará');
-          // Continuar com o pagamento mesmo se não salvar
-        }
+
+      if (selectedCard) {
+        paymentData.cardId = selectedCard;
       } else {
-        payload.cardId = selectedCard;
-        payload.cvv = cardData.cvv;
+        paymentData.newCard = newCard;
       }
-      
-      console.log('🔵 Enviando pagamento com cartão:', payload);
-      const response = await api.post('/api/payments/card/create', payload);
-      console.log('✅ Pagamento processado:', response.data);
-      
-      if (response.data.status === 'success') {
-        toast.success('Pagamento aprovado!');
-        
-        // Carrinho será limpo automaticamente pelo backend
-        
-        // Redirecionar para comprovante
-        navigate(`/payment/receipt/${orderId}`, {
-          state: {
-            paymentMethod: paymentType === 'credit' ? 'credit_card' : 'debit_card',
-            paymentResult: response.data.data.paymentResult,
-            orderId
-          }
-        });
-      }
+
+      const res = await api.post('/api/payments/card/create', paymentData);
+      toast.success('Pagamento processado!');
+      navigate(`/payment/receipt/${orderId}`);
     } catch (error) {
-      console.error('❌ Erro ao processar pagamento:', error);
-      console.error('Resposta do erro:', error.response?.data);
-      console.error('Status do erro:', error.response?.status);
       toast.error(error.response?.data?.message || 'Erro ao processar pagamento');
-    } finally {
-      setProcessing(false);
     }
   };
 
-  const maxInstallments = paymentType === 'credit' ? 12 : 1;
-
-  if (loading) {
-    return (
-      <div className="payment-card-page">
-        <div className="container">
-          <div className="loading-spinner">Carregando...</div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="payment-card-page">
+    <div className="payment-page">
       <div className="container">
-        <div className="payment-card-container">
-          <div className="payment-header">
-            <div className="payment-icon">
-              {paymentType === 'credit' ? '💳' : '💳'}
-            </div>
-            <h1>Pagamento com Cartão {paymentType === 'credit' ? 'de Crédito' : 'de Débito'}</h1>
-            <p className="payment-subtitle">
-              {paymentType === 'credit' ? 'Parcelamento em até 12x sem juros' : 'Débito à vista'}
-            </p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="payment-form">
-            {/* Seleção de Cartão Salvo ou Novo */}
-            {savedCards.length > 0 && (
-              <div className="card-selection-section">
-                <h3>Selecionar Cartão</h3>
-                
-                <div className="saved-cards-list">
-                  {savedCards.map((card) => (
-                    <div 
-                      key={card._id}
-                      className={`saved-card-item ${selectedCard === card._id && !useNewCard ? 'selected' : ''}`}
-                      onClick={() => {
-                        setSelectedCard(card._id);
-                        setUseNewCard(false);
-                      }}
-                    >
-                      <div className="card-icon">💳</div>
-                      <div className="card-info">
-                        <p className="card-number">{card.maskedNumber}</p>
-                        <p className="card-holder">{card.cardHolderName}</p>
-                        <p className="card-brand">{card.cardBrand.toUpperCase()}</p>
-                      </div>
-                      {card.isDefault && <span className="badge-default">Padrão</span>}
+        <div className="payment-card">
+          <h1>💳 Pagamento com Cartão {cardType === 'credit_card' ? 'de Crédito' : 'de Débito'}</h1>
+          
+          <form onSubmit={processPayment}>
+            {/* Cartões Salvos */}
+            {savedCards.length > 0 && !showNewCardForm && (
+              <div className="saved-cards-section">
+                <h3>Cartões Salvos</h3>
+                {savedCards.map(card => (
+                  <label key={card._id} className="card-option">
+                    <input
+                      type="radio"
+                      name="savedCard"
+                      value={card._id}
+                      checked={selectedCard === card._id}
+                      onChange={() => setSelectedCard(card._id)}
+                    />
+                    <div className="card-info">
+                      <span className="card-brand">{card.cardBrand}</span>
+                      <span className="card-number">{card.getMaskedCardNumber || `**** ${card.lastFourDigits}`}</span>
                     </div>
-                  ))}
-                </div>
-
-                <button
-                  type="button"
-                  className="btn-new-card"
+                  </label>
+                ))}
+                <button 
+                  type="button" 
                   onClick={() => {
-                    setUseNewCard(true);
+                    setShowNewCardForm(true);
                     setSelectedCard(null);
                   }}
+                  className="btn btn-link"
                 >
-                  ➕ Usar Novo Cartão
+                  + Usar novo cartão
                 </button>
               </div>
             )}
 
-            {/* Formulário de Novo Cartão */}
-            {useNewCard && (
+            {/* Formulário Novo Cartão */}
+            {(savedCards.length === 0 || showNewCardForm) && (
               <div className="new-card-form">
-                <h3>Dados do Cartão</h3>
-                
+                <h3>Novo Cartão</h3>
                 <div className="form-group">
-                  <label>Número do Cartão</label>
+                  <label>Número do Cartão *</label>
                   <input
                     type="text"
                     name="cardNumber"
-                    value={cardData.cardNumber}
-                    onChange={handleCardDataChange}
-                    placeholder="0000 0000 0000 0000"
+                    value={newCard.cardNumber}
+                    onChange={handleCardChange}
+                    placeholder="1234 5678 9012 3456"
+                    maxLength="16"
                     required
                   />
                 </div>
-
                 <div className="form-group">
-                  <label>Nome do Titular</label>
+                  <label>Nome no Cartão *</label>
                   <input
                     type="text"
                     name="cardHolderName"
-                    value={cardData.cardHolderName}
-                    onChange={handleCardDataChange}
-                    placeholder="Como está no cartão"
+                    value={newCard.cardHolderName}
+                    onChange={handleCardChange}
+                    placeholder="NOME COMO NO CARTÃO"
                     required
-                    style={{ textTransform: 'uppercase' }}
                   />
                 </div>
-
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Validade</label>
-                    <div className="expiry-inputs">
-                      <input
-                        type="text"
-                        name="expiryMonth"
-                        value={cardData.expiryMonth}
-                        onChange={handleCardDataChange}
-                        placeholder="MM"
-                        maxLength="2"
-                        required
-                      />
-                      <span>/</span>
-                      <input
-                        type="text"
-                        name="expiryYear"
-                        value={cardData.expiryYear}
-                        onChange={handleCardDataChange}
-                        placeholder="AA"
-                        maxLength="2"
-                        required
-                      />
-                    </div>
+                    <label>Mês *</label>
+                    <input
+                      type="text"
+                      name="expiryMonth"
+                      value={newCard.expiryMonth}
+                      onChange={handleCardChange}
+                      placeholder="MM"
+                      maxLength="2"
+                      required
+                    />
                   </div>
-
                   <div className="form-group">
-                    <label>CVV</label>
+                    <label>Ano *</label>
+                    <input
+                      type="text"
+                      name="expiryYear"
+                      value={newCard.expiryYear}
+                      onChange={handleCardChange}
+                      placeholder="AA"
+                      maxLength="2"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>CVV *</label>
                     <input
                       type="text"
                       name="cvv"
-                      value={cardData.cvv}
-                      onChange={handleCardDataChange}
-                      placeholder="000"
+                      value={newCard.cvv}
+                      onChange={handleCardChange}
+                      placeholder="123"
                       maxLength="4"
                       required
                     />
                   </div>
                 </div>
-
-                <div className="form-check">
-                  <input
-                    type="checkbox"
-                    id="saveCard"
-                    name="saveCard"
-                    checked={cardData.saveCard}
-                    onChange={handleCardDataChange}
-                  />
-                  <label htmlFor="saveCard">
-                    Salvar cartão para compras futuras
+                <div className="form-group">
+                  <label>
+                    <input
+                      type="checkbox"
+                      name="isDefault"
+                      checked={newCard.isDefault}
+                      onChange={(e) => setNewCard({...newCard, isDefault: e.target.checked})}
+                    />
+                    Salvar cartão para futuras compras
                   </label>
                 </div>
+                {savedCards.length > 0 && (
+                  <button 
+                    type="button" 
+                    onClick={() => setShowNewCardForm(false)}
+                    className="btn btn-link"
+                  >
+                    ← Voltar para cartões salvos
+                  </button>
+                )}
               </div>
             )}
 
-            {/* CVV para Cartão Salvo */}
-            {!useNewCard && selectedCard && (
-              <div className="cvv-section">
-                <label>CVV de Segurança</label>
-                <input
-                  type="text"
-                  name="cvv"
-                  value={cardData.cvv}
-                  onChange={handleCardDataChange}
-                  placeholder="000"
-                  maxLength="4"
-                  required
-                />
-                <small>Por segurança, o CVV não é salvo</small>
-              </div>
-            )}
-
-            {/* Seleção de Parcelas */}
-            {paymentType === 'credit' && (
+            {/* Parcelas (apenas para crédito) */}
+            {cardType === 'credit_card' && (
               <div className="installments-section">
-                <label>Número de Parcelas</label>
+                <label>Parcelar em:</label>
                 <select 
                   value={installments} 
                   onChange={(e) => setInstallments(parseInt(e.target.value))}
+                  className="form-control"
                 >
-                  {[...Array(maxInstallments)].map((_, i) => {
-                    const numInstallments = i + 1;
-                    return (
-                      <option key={numInstallments} value={numInstallments}>
-                        {numInstallments}x sem juros
-                      </option>
-                    );
-                  })}
+                  {[...Array(12)].map((_, i) => (
+                    <option key={i + 1} value={i + 1}>
+                      {i + 1}x sem juros
+                    </option>
+                  ))}
                 </select>
               </div>
             )}
 
-            {/* Botões de Ação */}
-            <div className="form-actions">
-              <button 
-                type="button" 
-                className="btn-cancel"
-                onClick={() => navigate('/checkout')}
-                disabled={processing}
-              >
-                Voltar
+            <div className="actions">
+              <button type="submit" className="btn btn-primary">
+                Finalizar Pagamento
               </button>
               <button 
-                type="submit" 
-                className="btn-submit"
-                disabled={processing}
+                type="button" 
+                onClick={() => navigate('/checkout')} 
+                className="btn btn-secondary"
               >
-                {processing ? 'Processando...' : `Pagar Agora`}
+                Voltar
               </button>
             </div>
           </form>

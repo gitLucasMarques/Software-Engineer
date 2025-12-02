@@ -17,24 +17,22 @@ const authMiddleware = require('../middlewares/authMiddleware');
 // Todas as rotas requerem autenticação
 router.use(authMiddleware);
 
-// Rotas de pagamento
+// Rotas de pagamento PIX
 router.post('/pix/create', paymentController.createPixPayment);
+router.post('/pix/confirm', paymentController.confirmPixPayment);
+
+// Rotas de pagamento Boleto
 router.post('/boleto/create', paymentController.createBoletoPayment);
+router.post('/boleto/confirm', paymentController.confirmBoletoPayment);
+
+// Rotas de pagamento com Cartão
 router.post('/card/create', paymentController.createCardPayment);
-router.post('/simulate-approval/:orderId', paymentController.simulatePaymentApproval);
-router.get('/status/:orderId', paymentController.getPaymentStatus);
+
+// Comprovante
 router.get('/receipt/:orderId', paymentController.getReceipt);
 
 // Rotas de gerenciamento de cartões
 router.get('/cards', paymentController.getUserCards);
-router.post('/cards', paymentController.saveCard);
 router.delete('/cards/:cardId', paymentController.deleteCard);
-
-// Rotas descontinuadas (retornam 501)
-router.post('/create', paymentController.createPaymentIntent);
-router.post('/mercadopago/create', paymentController.createMercadoPagoPayment);
-router.post('/paypal/create', paymentController.createPayPalPayment);
-router.post('/webhook/mercadopago', paymentController.handleMercadoPagoWebhook);
-router.post('/webhook/paypal', paymentController.handlePayPalWebhook);
 
 module.exports = router;

@@ -1,117 +1,85 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { toast } from 'react-toastify';
-import Barcode from 'react-barcode';
 import './PaymentBoletoPage.css';
 
 const PaymentBoletoPage = () => {
-  const location = useLocation();
+  const { orderId } = useParams();
   const navigate = useNavigate();
-  const { orderId, installments = 1 } = location.state || {};
-  
   const [boletoData, setBoletoData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [installments, setInstallments] = useState(1);
   const [copied, setCopied] = useState(false);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!orderId) {
-      toast.error('Pedido não encontrado');
-      navigate('/cart');
-      return;
-    }
-
-    generateBoleto();
+    // Buscar informações do pedido
+    fetchOrder();
   }, [orderId]);
+
+  const fetchOrder = async () => {
+    try {
+      const res = await api.get(`/api/orders/${orderId}`);
+      // Pedido carregado, pronto para gerar boleto
+    } catch (error) {
+      toast.error('Erro ao carregar pedido');
+      navigate('/orders');
+    }
+  };
 
   const generateBoleto = async () => {
     try {
-      setLoading(true);
-      setError(null);
-      console.log('🔵 Gerando boleto para pedido:', orderId);
-      const response = await api.post('/api/payments/boleto/create', { 
-        orderId,
+      const res = await api.post('/api/payments/boleto/create', { 
+        orderId, 
         installments 
       });
-      console.log('✅ Boleto gerado com sucesso:', response.data);
-      setBoletoData(response.data.data.boletoData);
+      setBoletoData(res.data.data);
+      toast.success('Boleto gerado!');
     } catch (error) {
-      console.error('❌ Erro ao gerar boleto:', error);
-      console.error('Resposta do erro:', error.response?.data);
-      console.error('Status do erro:', error.response?.status);
-      const errorMessage = error.response?.data?.message || 'Erro ao gerar boleto';
-      setError(errorMessage);
-      toast.error(errorMessage);
-    } finally {
-      setLoading(false);
+      toast.error('Erro ao gerar boleto');
     }
   };
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(boletoData.digitableLine);
+  const copyCode = () => {
+    navigator.clipboard.writeText(boletoData.boletoCode);
     setCopied(true);
-    toast.success('Código de barras copiado!');
-    setTimeout(() => setCopied(false), 3000);
+    toast.success('Código copiado!');
+    setTimeout(() => setCopied(false), 2000);
   };
 
-  const printBoleto = () => {
-    window.print();
-  };
-
-  const handleFinish = () => {
-    navigate(`/payment/receipt/${orderId}`, { 
-      state: { 
-        paymentMethod: 'boleto',
-        orderId 
-      } 
-    });
-  };
-
-  const handleSimulatePayment = async () => {
-    try {
-      console.log('🔵 Simulando pagamento boleto para pedido:', orderId);
-      await api.post(`/api/payments/simulate-approval/${orderId}`);
-      console.log('✅ Pagamento boleto simulado com sucesso');
-      toast.success('Pagamento simulado com sucesso!');
-      
-      // Carrinho será limpo automaticamente pelo backend
-      
-      setTimeout(() => {
-        navigate(`/payment/receipt/${orderId}`, { 
-          state: { 
-            paymentMethod: 'boleto',
-            orderId 
-          } 
-        });
-      }, 1000);
-    } catch (error) {
-      console.error('❌ Erro ao simular pagamento:', error);
-      console.error('Resposta do erro:', error.response?.data);
-      console.error('Status do erro:', error.response?.status);
-      toast.error(error.response?.data?.message || 'Erro ao simular pagamento');
+  const simulatePayment = async () => {
+    if (window.confirm('Simular pagamento do boleto?')) {
+      try {
+        await api.post('/api/payments/boleto/confirm', { orderId });
+        toast.success('Pagamento confirmado!');
+        navigate(`/payment/receipt/${orderId}`);
+      } catch (error) {
+        toast.error('Erro ao confirmar');
+      }
     }
   };
 
-  if (loading) {
+  if (!boletoData) {
     return (
-      <div className="payment-boleto-page">
+      <div className="payment-page">
         <div className="container">
-          <div className="loading-spinner">Gerando boleto...</div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="payment-boleto-page">
-        <div className="container">
-          <div className="error-card">
-            <h2>❌ Erro ao Gerar Boleto</h2>
-            <p>{error}</p>
-            <button className="btn-primary" onClick={() => navigate('/orders')}>
-              Voltar para Pedidos
+          <div className="payment-card">
+            <h1>📄 Pagamento via Boleto</h1>
+            <div className="installments-section">
+              <label>Escolha o número de parcelas:</label>
+              <select 
+                value={installments} 
+                onChange={(e) => setInstallments(parseInt(e.target.value))}
+                className="form-control"
+              >
+                {[...Array(12)].map((_, i) => (
+                  <option key={i + 1} value={i + 1}>
+                    {i + 1}x {i === 0 ? 'sem juros' : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button onClick={generateBoleto} className="btn btn-primary">
+              Gerar Boleto
             </button>
           </div>
         </div>
@@ -119,122 +87,35 @@ const PaymentBoletoPage = () => {
     );
   }
 
-  if (!boletoData) {
-    return null;
-  }
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('pt-BR');
-  };
-
   return (
-    <div className="payment-boleto-page">
+    <div className="payment-page">
       <div className="container">
-        <div className="boleto-card">
-          <div className="boleto-header no-print">
-            <div className="payment-icon">📄</div>
-            <h1>Boleto Bancário</h1>
-            <p className="payment-subtitle">Pague em qualquer banco, lotérica ou app bancário</p>
+        <div className="payment-card">
+          <h1>📄 Boleto Gerado</h1>
+          <div className="boleto-info">
+            <p><strong>Valor:</strong> R$ {boletoData.amount?.toFixed(2)}</p>
+            <p><strong>Parcelas:</strong> {boletoData.installments}x de R$ {boletoData.installmentAmount}</p>
+            <p><strong>Vencimento:</strong> {new Date(boletoData.dueDate).toLocaleDateString()}</p>
+          </div>
+          
+          <div className="code-section">
+            <label>Código de Barras:</label>
+            <div className="barcode">{boletoData.boletoBarcode}</div>
+            
+            <label>Linha Digitável:</label>
+            <textarea readOnly value={boletoData.boletoCode} rows="2" />
+            <button onClick={copyCode} className="btn btn-secondary">
+              {copied ? '✓ Copiado' : 'Copiar Código'}
+            </button>
           </div>
 
-          <div className="boleto-content">
-            {/* Informações do Beneficiário e Pagador */}
-            <div className="boleto-info-grid">
-              <div className="info-section">
-                <h3>💼 Beneficiário</h3>
-                <p><strong>{boletoData.beneficiary.name}</strong></p>
-                <p>CNPJ: {boletoData.beneficiary.document}</p>
-                <p>{boletoData.beneficiary.address}</p>
-              </div>
-
-              <div className="info-section">
-                <h3>👤 Pagador</h3>
-                <p><strong>{boletoData.payer.name}</strong></p>
-                <p>{boletoData.payer.email}</p>
-                <p>{boletoData.payer.address}</p>
-              </div>
-            </div>
-
-            {/* Dados do Pagamento */}
-            <div className="payment-details-box">
-              <div className="detail-row">
-                <span className="detail-label">Valor do Documento:</span>
-                <span className="detail-value">R$ {boletoData.amount}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Vencimento:</span>
-                <span className="detail-value due-date">{formatDate(boletoData.dueDate)}</span>
-              </div>
-              {installments > 1 && (
-                <div className="detail-row">
-                  <span className="detail-label">Parcelas:</span>
-                  <span className="detail-value">{installments}x de R$ {(parseFloat(boletoData.amount) / installments).toFixed(2)}</span>
-                </div>
-              )}
-              <div className="detail-row">
-                <span className="detail-label">ID da Transação:</span>
-                <span className="detail-value">{boletoData.transactionId.slice(-16)}</span>
-              </div>
-            </div>
-
-            {/* Código de Barras */}
-            <div className="barcode-section">
-              <h3>Código de Barras</h3>
-              <div className="barcode-container">
-                <Barcode 
-                  value={boletoData.barcode}
-                  format="CODE128"
-                  width={2}
-                  height={60}
-                  displayValue={false}
-                />
-              </div>
-            </div>
-
-            {/* Linha Digitável */}
-            <div className="digitable-line-section">
-              <label>Linha Digitável</label>
-              <div className="digitable-line-box">
-                <input 
-                  type="text" 
-                  value={boletoData.digitableLine} 
-                  readOnly 
-                  onClick={(e) => e.target.select()}
-                />
-                <button 
-                  className={`btn-copy ${copied ? 'copied' : ''}`}
-                  onClick={copyToClipboard}
-                >
-                  {copied ? '✓ Copiado' : '📋 Copiar'}
-                </button>
-              </div>
-            </div>
-
-            {/* Instruções */}
-            <div className="instructions-section">
-              <h3>📝 Instruções:</h3>
-              <ul className="instructions-list">
-                {boletoData.instructions.map((instruction, index) => (
-                  <li key={index}>{instruction}</li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Ações */}
-            <div className="boleto-actions no-print">
-              <button className="btn-print" onClick={printBoleto}>
-                🖨️ Imprimir Boleto
-              </button>
-              <button className="btn-simulate" onClick={handleSimulatePayment}>
-                💰 Simular Pagamento
-              </button>
-              <button className="btn-secondary" onClick={() => navigate('/orders')}>
-                Voltar para Pedidos
-              </button>
-              <button className="btn-primary" onClick={handleFinish}>
-                Ver Comprovante
-              </button>
-            </div>
+          <div className="actions">
+            <button onClick={simulatePayment} className="btn btn-primary">
+              ✓ Simular Pagamento
+            </button>
+            <button onClick={() => navigate('/orders')} className="btn btn-secondary">
+              Ver Pedidos
+            </button>
           </div>
         </div>
       </div>

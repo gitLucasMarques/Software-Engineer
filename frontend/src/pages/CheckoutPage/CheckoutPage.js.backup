@@ -7,7 +7,7 @@ import { toast } from 'react-toastify';
 import './CheckoutPage.css';
 
 const CheckoutPage = () => {
-  const { cart } = useCart();
+  const { cart, clearCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
   
@@ -87,30 +87,41 @@ const CheckoutPage = () => {
         shippingAddress: shippingInfo
       };
 
+      console.log('Criando pedido com dados:', orderData);
       const orderResponse = await api.post('/api/orders', orderData);
+      console.log('Resposta do pedido:', orderResponse.data);
+      
       const orderId = orderResponse.data.data.order._id;
+      console.log('ID do pedido criado:', orderId);
 
       toast.success('Pedido criado com sucesso!');
 
-      // Redirecionar para página de pagamento baseado no método escolhido
-      switch(paymentMethod) {
+      // NÃO limpar carrinho aqui - só limpar após confirmação do pagamento
+      // O carrinho será limpo nas páginas de pagamento após sucesso
+
+      // Redirecionar baseado no método de pagamento
+      switch (paymentMethod) {
         case 'pix':
-          navigate(`/payment/pix/${orderId}`);
+          navigate('/payment/pix', { state: { orderId } });
           break;
         case 'boleto':
-          navigate(`/payment/boleto/${orderId}`);
+          navigate('/payment/boleto', { state: { orderId, installments: 1 } });
           break;
         case 'credit_card':
+          navigate('/payment/card', { state: { orderId, paymentType: 'credit' } });
+          break;
         case 'debit_card':
-          navigate(`/payment/card/${orderId}`, { state: { cardType: paymentMethod } });
+          navigate('/payment/card', { state: { orderId, paymentType: 'debit' } });
           break;
         default:
           toast.error('Método de pagamento inválido');
+          navigate('/orders');
       }
-
+      
     } catch (error) {
-      console.error('Erro ao criar pedido:', error);
-      toast.error(error.response?.data?.message || 'Erro ao criar pedido');
+      console.error('Erro ao processar checkout:', error);
+      console.error('Detalhes do erro:', error.response?.data);
+      toast.error(error.response?.data?.message || 'Erro ao processar pedido');
     } finally {
       setLoading(false);
     }
@@ -120,33 +131,77 @@ const CheckoutPage = () => {
     return null;
   }
 
+  const total = calculateTotal();
+
   return (
     <div className="checkout-page">
       <div className="container">
-        <h1>Finalizar Compra</h1>
+        <h1>💳 Finalizar Compra</h1>
 
         <div className="checkout-content">
-          <form onSubmit={handleCheckout} className="checkout-form">
-            {/* Informações de Envio */}
-            <section className="checkout-section">
-              <h2>📦 Informações de Entrega</h2>
+          {/* Resumo do pedido */}
+          <div className="order-summary">
+            <h2>Resumo do Pedido</h2>
+            
+            <div className="order-items">
+              {cart.items.map(item => {
+                const product = item.productId;
+                const subtotal = calculateSubtotal(item);
+                
+                return (
+                  <div key={item._id} className="order-item">
+                    <img 
+                      src={product.imageUrl || 'https://via.placeholder.com/80'} 
+                      alt={product.name}
+                      onError={(e) => e.target.src = 'https://via.placeholder.com/80'}
+                    />
+                    <div className="item-info">
+                      <h4>{product.name}</h4>
+                      <p>Quantidade: {item.quantity}</p>
+                    </div>
+                    <div className="item-price">
+                      R$ {subtotal.toFixed(2)}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="order-total">
+              <div className="total-row">
+                <span>Subtotal:</span>
+                <span>R$ {total.toFixed(2)}</span>
+              </div>
+              <div className="total-row">
+                <span>Frete:</span>
+                <span className="free">Grátis</span>
+              </div>
+              <div className="total-row total-final">
+                <strong>Total:</strong>
+                <strong>R$ {total.toFixed(2)}</strong>
+              </div>
+            </div>
+          </div>
+
+          {/* Formulário de checkout */}
+          <div className="checkout-form-container">
+            <form onSubmit={handleCheckout} className="checkout-form">
+              <h2>Informações de Envio</h2>
               
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Nome Completo *</label>
-                  <input
-                    type="text"
-                    name="fullName"
-                    value={shippingInfo.fullName}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
+              <div className="form-group">
+                <label>Nome Completo *</label>
+                <input
+                  type="text"
+                  name="fullName"
+                  value={shippingInfo.fullName}
+                  onChange={handleInputChange}
+                  required
+                />
               </div>
 
               <div className="form-row">
                 <div className="form-group">
-                  <label>Email *</label>
+                  <label>E-mail *</label>
                   <input
                     type="email"
                     name="email"
@@ -167,17 +222,15 @@ const CheckoutPage = () => {
                 </div>
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Endereço *</label>
-                  <input
-                    type="text"
-                    name="address"
-                    value={shippingInfo.address}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
+              <div className="form-group">
+                <label>Endereço *</label>
+                <input
+                  type="text"
+                  name="address"
+                  value={shippingInfo.address}
+                  onChange={handleInputChange}
+                  required
+                />
               </div>
 
               <div className="form-row">
@@ -214,14 +267,11 @@ const CheckoutPage = () => {
                   />
                 </div>
               </div>
-            </section>
 
-            {/* Método de Pagamento */}
-            <section className="checkout-section">
-              <h2>💳 Método de Pagamento</h2>
+              <h2 style={{ marginTop: '30px' }}>Método de Pagamento</h2>
               
               <div className="payment-methods">
-                <label className={`payment-method ${paymentMethod === 'pix' ? 'selected' : ''}`}>
+                <label className={`payment-option ${paymentMethod === 'pix' ? 'active' : ''}`}>
                   <input
                     type="radio"
                     name="paymentMethod"
@@ -229,16 +279,16 @@ const CheckoutPage = () => {
                     checked={paymentMethod === 'pix'}
                     onChange={(e) => setPaymentMethod(e.target.value)}
                   />
-                  <div className="payment-method-content">
-                    <span className="payment-icon">🔲</span>
+                  <div className="payment-info">
+                    <span className="payment-icon">📱</span>
                     <div>
                       <strong>PIX</strong>
-                      <p>Pagamento instantâneo</p>
+                      <p>Aprovação imediata</p>
                     </div>
                   </div>
                 </label>
 
-                <label className={`payment-method ${paymentMethod === 'boleto' ? 'selected' : ''}`}>
+                <label className={`payment-option ${paymentMethod === 'boleto' ? 'active' : ''}`}>
                   <input
                     type="radio"
                     name="paymentMethod"
@@ -246,16 +296,16 @@ const CheckoutPage = () => {
                     checked={paymentMethod === 'boleto'}
                     onChange={(e) => setPaymentMethod(e.target.value)}
                   />
-                  <div className="payment-method-content">
+                  <div className="payment-info">
                     <span className="payment-icon">📄</span>
                     <div>
                       <strong>Boleto Bancário</strong>
-                      <p>Pague em até 12x</p>
+                      <p>Vencimento em 3 dias úteis</p>
                     </div>
                   </div>
                 </label>
 
-                <label className={`payment-method ${paymentMethod === 'credit_card' ? 'selected' : ''}`}>
+                <label className={`payment-option ${paymentMethod === 'credit_card' ? 'active' : ''}`}>
                   <input
                     type="radio"
                     name="paymentMethod"
@@ -263,16 +313,16 @@ const CheckoutPage = () => {
                     checked={paymentMethod === 'credit_card'}
                     onChange={(e) => setPaymentMethod(e.target.value)}
                   />
-                  <div className="payment-method-content">
+                  <div className="payment-info">
                     <span className="payment-icon">💳</span>
                     <div>
                       <strong>Cartão de Crédito</strong>
-                      <p>Parcele em até 12x sem juros</p>
+                      <p>Parcelamento em até 12x sem juros</p>
                     </div>
                   </div>
                 </label>
 
-                <label className={`payment-method ${paymentMethod === 'debit_card' ? 'selected' : ''}`}>
+                <label className={`payment-option ${paymentMethod === 'debit_card' ? 'active' : ''}`}>
                   <input
                     type="radio"
                     name="paymentMethod"
@@ -280,7 +330,7 @@ const CheckoutPage = () => {
                     checked={paymentMethod === 'debit_card'}
                     onChange={(e) => setPaymentMethod(e.target.value)}
                   />
-                  <div className="payment-method-content">
+                  <div className="payment-info">
                     <span className="payment-icon">💳</span>
                     <div>
                       <strong>Cartão de Débito</strong>
@@ -289,63 +339,23 @@ const CheckoutPage = () => {
                   </div>
                 </label>
               </div>
-            </section>
 
-            <button 
-              type="submit" 
-              className="btn btn-primary btn-checkout"
-              disabled={loading}
-            >
-              {loading ? 'Processando...' : 'Continuar para Pagamento'}
-            </button>
-          </form>
-
-          {/* Resumo do Pedido */}
-          <aside className="order-summary">
-            <h2>Resumo do Pedido</h2>
-            
-            <div className="order-items">
-              {cart.items.map((item) => {
-                const product = item.productId;
-                if (!product) return null;
-
-                const price = product.price || 0;
-                const discount = product.discount || 0;
-                const finalPrice = discount > 0 ? price - (price * discount / 100) : price;
-
-                return (
-                  <div key={item._id} className="order-item">
-                    <img 
-                      src={product.imageUrl || 'https://via.placeholder.com/80'} 
-                      alt={product.name}
-                    />
-                    <div className="order-item-details">
-                      <p className="order-item-name">{product.name}</p>
-                      <p className="order-item-quantity">Qtd: {item.quantity}</p>
-                    </div>
-                    <p className="order-item-price">
-                      R$ {(finalPrice * item.quantity).toFixed(2)}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="order-totals">
-              <div className="order-total-row">
-                <span>Subtotal</span>
-                <span>R$ {calculateTotal().toFixed(2)}</span>
+              <div className="payment-info-box">
+                <p>
+                  <strong>🔒 Pagamento Seguro:</strong> Todas as transações são processadas com segurança.
+                  Seus dados de pagamento são protegidos por criptografia.
+                </p>
               </div>
-              <div className="order-total-row">
-                <span>Frete</span>
-                <span className="free">Grátis</span>
-              </div>
-              <div className="order-total-row total">
-                <strong>Total</strong>
-                <strong>R$ {calculateTotal().toFixed(2)}</strong>
-              </div>
-            </div>
-          </aside>
+
+              <button 
+                type="submit" 
+                className="btn btn-primary btn-full"
+                disabled={loading || !paymentMethod}
+              >
+                {loading ? 'Processando...' : `Continuar para Pagamento`}
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     </div>

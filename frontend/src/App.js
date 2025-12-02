@@ -88,17 +88,17 @@ function App() {
           
           <Route path="/payment/success" element={<PaymentSuccessPage />} />
           <Route path="/payment/failure" element={<PaymentFailurePage />} />
-          <Route path="/payment/pix" element={
+          <Route path="/payment/pix/:orderId" element={
             <PrivateRoute>
               <PaymentPixPage />
             </PrivateRoute>
           } />
-          <Route path="/payment/boleto" element={
+          <Route path="/payment/boleto/:orderId" element={
             <PrivateRoute>
               <PaymentBoletoPage />
             </PrivateRoute>
           } />
-          <Route path="/payment/card" element={
+          <Route path="/payment/card/:orderId" element={
             <PrivateRoute>
               <PaymentCardPage />
             </PrivateRoute>

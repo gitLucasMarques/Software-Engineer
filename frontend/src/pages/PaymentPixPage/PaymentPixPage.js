@@ -1,205 +1,93 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { toast } from 'react-toastify';
-import { QRCodeSVG } from 'qrcode.react';
 import './PaymentPixPage.css';
 
 const PaymentPixPage = () => {
-  const location = useLocation();
+  const { orderId } = useParams();
   const navigate = useNavigate();
-  const { orderId } = location.state || {};
-  
   const [pixData, setPixData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [timeLeft, setTimeLeft] = useState('');
   const [copied, setCopied] = useState(false);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!orderId) {
-      toast.error('Pedido não encontrado');
-      navigate('/cart');
-      return;
-    }
-
-    generatePixCode();
+    generatePix();
   }, [orderId]);
 
-  const generatePixCode = async () => {
+  useEffect(() => {
+    if (pixData?.expiresAt) {
+      const timer = setInterval(() => {
+        const diff = new Date(pixData.expiresAt) - new Date();
+        if (diff <= 0) {
+          setTimeLeft('Expirado');
+          clearInterval(timer);
+        } else {
+          const min = Math.floor(diff / 60000);
+          const sec = Math.floor((diff % 60000) / 1000);
+          setTimeLeft(`${min}:${sec.toString().padStart(2, '0')}`);
+        }
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [pixData]);
+
+  const generatePix = async () => {
     try {
-      setLoading(true);
-      setError(null);
-      console.log('🔵 Gerando PIX para pedido:', orderId);
-      const response = await api.post('/api/payments/pix/create', { orderId });
-      console.log('✅ PIX gerado com sucesso:', response.data);
-      setPixData(response.data.data.pixData);
+      const res = await api.post('/api/payments/pix/create', { orderId });
+      setPixData(res.data.data);
+      toast.success('Código PIX gerado!');
     } catch (error) {
-      console.error('❌ Erro ao gerar código PIX:', error);
-      console.error('Resposta do erro:', error.response?.data);
-      console.error('Status do erro:', error.response?.status);
-      const errorMessage = error.response?.data?.message || 'Erro ao gerar código PIX';
-      setError(errorMessage);
-      toast.error(errorMessage);
-    } finally {
-      setLoading(false);
+      toast.error('Erro ao gerar PIX');
+      navigate('/orders');
     }
   };
 
-  const copyToClipboard = () => {
+  const copyCode = () => {
     navigator.clipboard.writeText(pixData.pixCode);
     setCopied(true);
-    toast.success('Código PIX copiado!');
-    setTimeout(() => setCopied(false), 3000);
+    toast.success('Código copiado!');
+    setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleFinish = () => {
-    navigate(`/payment/receipt/${orderId}`, { 
-      state: { 
-        paymentMethod: 'pix',
-        orderId 
-      } 
-    });
-  };
-
-  const handleSimulatePayment = async () => {
-    try {
-      console.log('🔵 Simulando pagamento para pedido:', orderId);
-      await api.post(`/api/payments/simulate-approval/${orderId}`);
-      console.log('✅ Pagamento simulado com sucesso');
-      toast.success('Pagamento simulado com sucesso!');
-      
-      // Carrinho será limpo automaticamente pelo backend
-      
-      setTimeout(() => {
-        navigate(`/payment/receipt/${orderId}`, { 
-          state: { 
-            paymentMethod: 'pix',
-            orderId 
-          } 
-        });
-      }, 1000);
-    } catch (error) {
-      console.error('❌ Erro ao simular pagamento:', error);
-      console.error('Resposta do erro:', error.response?.data);
-      console.error('Status do erro:', error.response?.status);
-      toast.error(error.response?.data?.message || 'Erro ao simular pagamento');
+  const simulatePayment = async () => {
+    if (window.confirm('Simular pagamento?')) {
+      try {
+        await api.post('/api/payments/pix/confirm', { orderId });
+        toast.success('Pagamento confirmado!');
+        navigate(`/payment/receipt/${orderId}`);
+      } catch (error) {
+        toast.error('Erro ao confirmar');
+      }
     }
   };
 
-  if (loading) {
-    return (
-      <div className="payment-pix-page">
-        <div className="container">
-          <div className="loading-spinner">Gerando código PIX...</div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="payment-pix-page">
-        <div className="container">
-          <div className="error-card">
-            <h2>❌ Erro ao Gerar PIX</h2>
-            <p>{error}</p>
-            <button className="btn-primary" onClick={() => navigate('/orders')}>
-              Voltar para Pedidos
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!pixData) {
-    return null;
-  }
-
-  const expiresIn = Math.floor((new Date(pixData.expiresAt) - new Date()) / 1000 / 60);
+  if (!pixData) return <div className="loading-page">Carregando...</div>;
 
   return (
-    <div className="payment-pix-page">
+    <div className="payment-page">
       <div className="container">
         <div className="payment-card">
-          <div className="payment-header">
-            <div className="payment-icon">📱</div>
-            <h1>Pagamento via PIX</h1>
-            <p className="payment-subtitle">Pague com qualquer banco ou carteira digital</p>
+          <h1>🔲 Pagamento via PIX</h1>
+          <div className="qr-section">
+            <img src={pixData.pixQRCode} alt="QR Code" className="qr-code" />
+            <p>Valor: R$ {pixData.amount?.toFixed(2)}</p>
+            <p>Tempo: {timeLeft}</p>
           </div>
-
-          <div className="payment-content">
-            <div className="pix-qrcode-section">
-              <div className="qrcode-container">
-                <QRCodeSVG 
-                  value={pixData.qrCodeText} 
-                  size={250}
-                  level="H"
-                  includeMargin={true}
-                />
-              </div>
-              <p className="qrcode-subtitle">
-                Escaneie o QR Code com o aplicativo do seu banco
-              </p>
-            </div>
-
-            <div className="divider">
-              <span>ou</span>
-            </div>
-
-            <div className="pix-code-section">
-              <label>Código PIX (Copia e Cola)</label>
-              <div className="pix-code-box">
-                <input 
-                  type="text" 
-                  value={pixData.pixCode} 
-                  readOnly 
-                  onClick={(e) => e.target.select()}
-                />
-                <button 
-                  className={`btn-copy ${copied ? 'copied' : ''}`}
-                  onClick={copyToClipboard}
-                >
-                  {copied ? '✓ Copiado' : '📋 Copiar'}
-                </button>
-              </div>
-            </div>
-
-            <div className="payment-info-box">
-              <div className="info-row">
-                <span className="info-label">Valor:</span>
-                <span className="info-value">R$ {pixData.amount}</span>
-              </div>
-              <div className="info-row">
-                <span className="info-label">Expira em:</span>
-                <span className="info-value expire-time">{expiresIn} minutos</span>
-              </div>
-              <div className="info-row">
-                <span className="info-label">ID da Transação:</span>
-                <span className="info-value">{pixData.transactionId.slice(-12)}</span>
-              </div>
-            </div>
-
-            <div className="instructions-section">
-              <h3>📝 Como pagar:</h3>
-              <ol className="instructions-list">
-                {pixData.instructions.map((instruction, index) => (
-                  <li key={index}>{instruction}</li>
-                ))}
-              </ol>
-            </div>
-
-            <div className="payment-actions">
-              <button className="btn-secondary" onClick={() => navigate('/orders')}>
-                Voltar para Pedidos
-              </button>
-              <button className="btn-simulate" onClick={handleSimulatePayment}>
-                💰 Simular Pagamento
-              </button>
-              <button className="btn-primary" onClick={handleFinish}>
-                Ver Comprovante
-              </button>
-            </div>
+          <div className="code-section">
+            <label>Código PIX:</label>
+            <textarea readOnly value={pixData.pixCode} rows="3" />
+            <button onClick={copyCode} className="btn btn-secondary">
+              {copied ? '✓ Copiado' : 'Copiar Código'}
+            </button>
+          </div>
+          <div className="actions">
+            <button onClick={simulatePayment} className="btn btn-primary">
+              ✓ Simular Pagamento
+            </button>
+            <button onClick={() => navigate('/orders')} className="btn btn-secondary">
+              Ver Pedidos
+            </button>
           </div>
         </div>
       </div>
