@@ -82,7 +82,7 @@ const orderSchema = new mongoose.Schema({
     paymentMethod: {
         type: String,
         enum: ['pix', 'boleto', 'credit_card', 'debit_card'],
-        required: true
+        required: false // Não obrigatório na criação, será definido no pagamento
     },
     paymentDetails: {
         // Para PIX

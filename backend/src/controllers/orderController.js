@@ -19,22 +19,30 @@ exports.createOrder = async (req, res) => {
         const userId = req.user._id;
         const { shippingAddress } = req.body;
 
+        console.log('🔵 [ORDER] Criando pedido para usuário:', userId);
+
         if (!shippingAddress) {
+            console.error('❌ [ORDER] Endereço de entrega não fornecido');
             return res.status(400).json({ status: 'fail', message: 'O endereço de entrega é obrigatório.' });
         }
 
         const cart = await Cart.findOne({ userId }).populate('items.productId');
 
         if (!cart || !cart.items || cart.items.length === 0) {
+            console.error('❌ [ORDER] Carrinho vazio');
             return res.status(400).json({ status: 'fail', message: 'Seu carrinho está vazio.' });
         }
+
+        console.log('✅ [ORDER] Carrinho encontrado com', cart.items.length, 'itens');
 
         const itemsToReserve = cart.items.map(item => ({
             productId: item.productId._id,
             quantity: item.quantity
         }));
 
+        console.log('🔵 [ORDER] Reservando estoque...');
         await stockService.reserveMultipleProducts(itemsToReserve);
+        console.log('✅ [ORDER] Estoque reservado');
 
         let total = 0;
         const orderItems = [];
@@ -48,6 +56,7 @@ exports.createOrder = async (req, res) => {
             });
         }
 
+        console.log('🔵 [ORDER] Criando pedido no banco...');
         const order = await Order.create({
             userId,
             totalAmount: total,
@@ -57,12 +66,16 @@ exports.createOrder = async (req, res) => {
             items: orderItems
         });
 
-        // NÃO limpar carrinho aqui - só limpar após confirmação do pagamento
-        // O carrinho será limpo quando o pagamento for aprovado
-        // cart.items = [];
-        // await cart.save();
+        console.log('✅ [ORDER] Pedido criado:', order._id);
 
-        await emailService.sendOrderConfirmation(req.user, order);
+        // Enviar email de confirmação (não bloquear se falhar)
+        try {
+            await emailService.sendOrderConfirmation(req.user, order);
+            console.log('✅ [ORDER] Email enviado');
+        } catch (emailError) {
+            console.warn('⚠️  [ORDER] Erro ao enviar email:', emailError.message);
+            // Não retornar erro, continuar
+        }
 
         res.status(201).json({
             status: 'success',
@@ -72,6 +85,8 @@ exports.createOrder = async (req, res) => {
         });
 
     } catch (error) {
+        console.error('❌ [ORDER] Erro ao criar pedido:', error);
+        console.error('Stack:', error.stack);
         res.status(500).json({
             status: 'error',
             message: error.message || 'Erro ao criar o pedido.'

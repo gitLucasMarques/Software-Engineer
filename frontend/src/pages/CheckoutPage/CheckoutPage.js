@@ -87,7 +87,10 @@ const CheckoutPage = () => {
         shippingAddress: shippingInfo
       };
 
+      console.log('🔵 [CHECKOUT] Criando pedido...');
       const orderResponse = await api.post('/api/orders', orderData);
+      console.log('✅ [CHECKOUT] Resposta:', orderResponse.data);
+      
       const orderId = orderResponse.data.data.order._id;
 
       toast.success('Pedido criado com sucesso!');
@@ -109,8 +112,14 @@ const CheckoutPage = () => {
       }
 
     } catch (error) {
-      console.error('Erro ao criar pedido:', error);
-      toast.error(error.response?.data?.message || 'Erro ao criar pedido');
+      console.error('❌ [CHECKOUT] Erro ao criar pedido:', error);
+      console.error('Detalhes:', error.response?.data);
+      
+      const errorMessage = error.response?.data?.message 
+        || error.message 
+        || 'Erro ao criar pedido. Tente novamente.';
+      
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

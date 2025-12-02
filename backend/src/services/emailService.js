@@ -28,18 +28,27 @@ class EmailService {
             host: process.env.EMAIL_HOST || 'smtp.gmail.com',
             port: process.env.EMAIL_PORT || 587,
             secure: false,
+            connectionTimeout: 5000, // 5 segundos
+            greetingTimeout: 5000, // 5 segundos
+            socketTimeout: 5000, // 5 segundos
             auth: {
                 user: process.env.EMAIL_USER,
                 pass: process.env.EMAIL_PASSWORD
             }
         });
 
-        // Verificar conexão
+        // Verificar conexão com timeout
+        const verifyTimeout = setTimeout(() => {
+            console.warn('⚠️  Email service: Timeout na verificação - continuando sem email');
+        }, 3000);
+
         this.transporter.verify((error) => {
+            clearTimeout(verifyTimeout);
             if (error) {
-                console.error('Erro na configuração do email:', error);
+                console.error('❌ Erro na configuração do email:', error.message);
+                console.warn('⚠️  Sistema continuará sem envio de emails');
             } else {
-                console.log('✓ Email service pronto para enviar mensagens');
+                console.log('✅ Email service pronto para enviar mensagens');
             }
         });
     }

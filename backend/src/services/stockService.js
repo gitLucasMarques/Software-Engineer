@@ -124,10 +124,25 @@ class StockService {
      */
     async reserveMultipleProducts(items) {
         try {
+            console.log('🔵 [STOCK] Iniciando reserva de', items.length, 'produtos');
+            
+            // Buscar todos os produtos de uma vez
+            const productIds = items.map(item => item.productId);
+            const products = await Product.find({ _id: { $in: productIds } });
+            
+            console.log('✅ [STOCK] Produtos encontrados:', products.length);
+
+            // Criar mapa de produtos para acesso rápido
+            const productMap = {};
+            products.forEach(product => {
+                productMap[product._id.toString()] = product;
+            });
+
             const results = [];
 
+            // Validar todos primeiro
             for (const item of items) {
-                const product = await Product.findById(item.productId);
+                const product = productMap[item.productId.toString()];
 
                 if (!product) {
                     throw new Error(`Produto ${item.productId} não encontrado`);
@@ -139,7 +154,13 @@ class StockService {
                         `Disponível: ${product.stock}, Solicitado: ${item.quantity}`
                     );
                 }
+            }
 
+            console.log('✅ [STOCK] Validações ok, atualizando estoque...');
+
+            // Atualizar estoque de todos
+            for (const item of items) {
+                const product = productMap[item.productId.toString()];
                 product.stock -= item.quantity;
                 await product.save();
 
@@ -151,10 +172,11 @@ class StockService {
                 });
             }
 
-            console.log(`Estoque reservado para ${items.length} produtos`);
+            console.log(`✅ [STOCK] Estoque reservado para ${items.length} produtos`);
             
             return { success: true, results };
         } catch (error) {
+            console.error('❌ [STOCK] Erro ao reservar estoque:', error.message);
             throw error;
         }
     }
