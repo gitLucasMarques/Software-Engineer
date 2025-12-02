@@ -38,6 +38,7 @@
     "mongoose": "^8.19.4",
     "multer": "^2.0.2",
     "nodemailer": "^7.0.10",
+    "qrcode": "^1.5.4",
     "uuid": "^9.0.1"
   },
   "devDependencies": {

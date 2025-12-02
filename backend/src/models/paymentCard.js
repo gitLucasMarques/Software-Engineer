@@ -67,6 +67,19 @@ const paymentCardSchema = new mongoose.Schema({
     enum: ['visa', 'mastercard', 'amex', 'elo', 'hipercard', 'discover']
   },
 
+  // CVV não é armazenado (apenas validado no momento do pagamento)
+  // Este campo não será persistido no banco
+  cvv: {
+    type: String,
+    validate: {
+      validator: function(v) {
+        if (!v) return true; // CVV é opcional ao salvar
+        return /^\d{3,4}$/.test(v);
+      },
+      message: 'CVV inválido (3 ou 4 dígitos)'
+    }
+  },
+
   // Define se é o cartão padrão do usuário
   isDefault: {
     type: Boolean,
@@ -85,7 +98,14 @@ const paymentCardSchema = new mongoose.Schema({
 // - extrai últimos 4 dígitos
 // - detecta bandeira
 // - criptografa o número real do cartão
+// - remove CVV (não deve ser persistido)
 paymentCardSchema.pre('save', function(next) {
+  // Remover CVV antes de salvar (nunca persistir CVV)
+  if (this.cvv) {
+    delete this.cvv;
+    this.$__.skipValidation = ['cvv'];
+  }
+  
   if (this.isModified('cardNumber')) {
     const cleanNumber = this.cardNumber.replace(/\s/g, '');
     this.lastFourDigits = cleanNumber.slice(-4);

@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { toast } from 'react-toastify';
+import { useCart } from '../../contexts/CartContext';
 import './PaymentBoletoPage.css';
 
 const PaymentBoletoPage = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
+  const { fetchCart } = useCart();
   const [boletoData, setBoletoData] = useState(null);
   const [installments, setInstallments] = useState(1);
   const [copied, setCopied] = useState(false);
@@ -51,6 +53,8 @@ const PaymentBoletoPage = () => {
       try {
         await api.post('/api/payments/boleto/confirm', { orderId });
         toast.success('Pagamento confirmado!');
+        // Atualizar carrinho para refletir que foi limpo
+        await fetchCart();
         navigate(`/payment/receipt/${orderId}`);
       } catch (error) {
         toast.error('Erro ao confirmar');

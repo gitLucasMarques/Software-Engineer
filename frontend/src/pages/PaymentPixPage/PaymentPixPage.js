@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { toast } from 'react-toastify';
+import { useCart } from '../../contexts/CartContext';
 import './PaymentPixPage.css';
 
 const PaymentPixPage = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
+  const { fetchCart } = useCart();
   const [pixData, setPixData] = useState(null);
   const [timeLeft, setTimeLeft] = useState('');
   const [copied, setCopied] = useState(false);
@@ -55,6 +57,8 @@ const PaymentPixPage = () => {
       try {
         await api.post('/api/payments/pix/confirm', { orderId });
         toast.success('Pagamento confirmado!');
+        // Atualizar carrinho para refletir que foi limpo
+        await fetchCart();
         navigate(`/payment/receipt/${orderId}`);
       } catch (error) {
         toast.error('Erro ao confirmar');

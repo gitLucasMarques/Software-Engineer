@@ -12,6 +12,7 @@
 
 const { Order, Cart, PaymentCard } = require('../models');
 const crypto = require('crypto');
+const QRCode = require('qrcode');
 
 // ==================== PIX ====================
 exports.createPixPayment = async (req, res) => {
@@ -37,7 +38,7 @@ exports.createPixPayment = async (req, res) => {
 
         // Gerar código PIX simulado
         const pixCode = generatePixCode(order.totalAmount);
-        const pixQRCode = generateQRCodeData(pixCode);
+        const pixQRCode = await generateQRCodeData(pixCode);
         const transactionId = generateTransactionId();
         const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 minutos
 
@@ -250,8 +251,11 @@ exports.createCardPayment = async (req, res) => {
         
         const userId = req.user._id;
 
+        console.log('📝 [CARD PAYMENT] Recebido:', { orderId, cardType, installments, hasCardId: !!cardId, hasNewCard: !!newCard });
+
         // Validações
         if (!['credit_card', 'debit_card'].includes(cardType)) {
+            console.log('❌ [CARD PAYMENT] Tipo de cartão inválido:', cardType);
             return res.status(400).json({ 
                 status: 'fail', 
                 message: 'Tipo de cartão inválido.' 
@@ -259,6 +263,7 @@ exports.createCardPayment = async (req, res) => {
         }
 
         if (cardType === 'debit_card' && installments > 1) {
+            console.log('❌ [CARD PAYMENT] Tentativa de parcelar débito');
             return res.status(400).json({ 
                 status: 'fail', 
                 message: 'Cartão de débito não permite parcelamento.' 
@@ -266,6 +271,7 @@ exports.createCardPayment = async (req, res) => {
         }
 
         if (cardType === 'credit_card' && (installments < 1 || installments > 12)) {
+            console.log('❌ [CARD PAYMENT] Parcelas inválidas:', installments);
             return res.status(400).json({ 
                 status: 'fail', 
                 message: 'Parcelas inválidas. Escolha entre 1 e 12.' 
@@ -277,14 +283,17 @@ exports.createCardPayment = async (req, res) => {
             .populate('items.productId');
 
         if (!order) {
+            console.log('❌ [CARD PAYMENT] Pedido não encontrado:', orderId);
             return res.status(404).json({ status: 'fail', message: 'Pedido não encontrado.' });
         }
 
         if (order.userId._id.toString() !== userId.toString()) {
+            console.log('❌ [CARD PAYMENT] Acesso negado ao pedido');
             return res.status(403).json({ status: 'fail', message: 'Acesso negado.' });
         }
 
         if (order.paymentStatus === 'paid') {
+            console.log('❌ [CARD PAYMENT] Pedido já pago');
             return res.status(400).json({ status: 'fail', message: 'Este pedido já foi pago.' });
         }
 
@@ -292,26 +301,39 @@ exports.createCardPayment = async (req, res) => {
 
         // Se é um cartão novo, salvar
         if (newCard) {
-            card = new PaymentCard({
-                userId,
-                cardNumber: newCard.cardNumber,
-                cardHolderName: newCard.cardHolderName,
-                expiryMonth: newCard.expiryMonth,
-                expiryYear: newCard.expiryYear,
-                cvv: newCard.cvv,
-                isDefault: newCard.isDefault || false
-            });
-            await card.save();
+            console.log('💳 [CARD PAYMENT] Salvando novo cartão...');
+            try {
+                card = new PaymentCard({
+                    userId,
+                    cardNumber: newCard.cardNumber,
+                    cardHolderName: newCard.cardHolderName,
+                    expiryMonth: newCard.expiryMonth,
+                    expiryYear: newCard.expiryYear,
+                    cvv: newCard.cvv,
+                    isDefault: newCard.isDefault || false
+                });
+                await card.save();
+                console.log('✅ [CARD PAYMENT] Cartão salvo com sucesso:', card._id);
+            } catch (error) {
+                console.error('❌ [CARD PAYMENT] Erro ao salvar cartão:', error);
+                return res.status(400).json({
+                    status: 'fail',
+                    message: error.message || 'Erro ao salvar cartão. Verifique os dados.'
+                });
+            }
         } else if (cardId) {
             // Buscar cartão existente
+            console.log('💳 [CARD PAYMENT] Buscando cartão existente:', cardId);
             card = await PaymentCard.findOne({ _id: cardId, userId });
             if (!card) {
+                console.log('❌ [CARD PAYMENT] Cartão não encontrado');
                 return res.status(404).json({ 
                     status: 'fail', 
                     message: 'Cartão não encontrado.' 
                 });
             }
         } else {
+            console.log('❌ [CARD PAYMENT] Nenhum cartão fornecido');
             return res.status(400).json({ 
                 status: 'fail', 
                 message: 'Forneça um cartão existente ou cadastre um novo.' 
@@ -320,6 +342,8 @@ exports.createCardPayment = async (req, res) => {
 
         const transactionId = generateTransactionId();
         const installmentAmount = order.totalAmount / installments;
+
+        console.log('💰 [CARD PAYMENT] Processando pagamento...', { transactionId, installments, installmentAmount });
 
         // Atualizar pedido com dados do cartão
         order.paymentMethod = cardType;
@@ -336,11 +360,16 @@ exports.createCardPayment = async (req, res) => {
         order.status = 'processing';
         await order.save();
 
+        console.log('✅ [CARD PAYMENT] Pedido atualizado');
+
         // Limpar carrinho
         await Cart.findOneAndUpdate(
             { userId },
             { $set: { items: [] } }
         );
+
+        console.log('✅ [CARD PAYMENT] Carrinho limpo');
+        console.log('✅ [CARD PAYMENT] Pagamento concluído com sucesso!');
 
         res.status(200).json({
             status: 'success',
@@ -481,9 +510,13 @@ function generatePixCode(amount) {
 }
 
 function generateQRCodeData(pixCode) {
-    // Retorna uma URL base64 simulada de QR Code
-    // Em produção, use uma biblioteca como 'qrcode' para gerar o QR real
-    return `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==`;
+    // Gera QR Code real a partir do código PIX
+    return QRCode.toDataURL(pixCode, {
+        errorCorrectionLevel: 'M',
+        type: 'image/png',
+        width: 300,
+        margin: 1
+    });
 }
 
 function generateBoletoCode() {

@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import api from '../../services/api';
 import { toast } from 'react-toastify';
+import { useCart } from '../../contexts/CartContext';
 import './PaymentCardPage.css';
 
 const PaymentCardPage = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const { fetchCart } = useCart();
   const cardType = location.state?.cardType || 'credit_card';
   
   const [savedCards, setSavedCards] = useState([]);
@@ -30,9 +32,12 @@ const PaymentCardPage = () => {
   const loadSavedCards = async () => {
     try {
       const res = await api.get('/api/payments/cards');
+      console.log('Cartões carregados:', res.data);
       setSavedCards(res.data.data.cards || []);
     } catch (error) {
-      console.error('Erro ao carregar cartões');
+      console.error('Erro ao carregar cartões', error);
+      // Não bloquear o usuário, permitir cadastro de novo cartão
+      setSavedCards([]);
     }
   };
 
@@ -52,14 +57,40 @@ const PaymentCardPage = () => {
 
       if (selectedCard) {
         paymentData.cardId = selectedCard;
+        console.log('Usando cartão salvo:', selectedCard);
       } else {
+        // Validar campos do novo cartão
+        if (!newCard.cardNumber || newCard.cardNumber.length < 13) {
+          toast.error('Número do cartão inválido');
+          return;
+        }
+        if (!newCard.cardHolderName) {
+          toast.error('Nome do titular é obrigatório');
+          return;
+        }
+        if (!newCard.expiryMonth || !newCard.expiryYear) {
+          toast.error('Data de validade é obrigatória');
+          return;
+        }
+        if (!newCard.cvv || newCard.cvv.length < 3) {
+          toast.error('CVV é obrigatório (3 ou 4 dígitos)');
+          return;
+        }
+        
         paymentData.newCard = newCard;
+        console.log('Enviando novo cartão:', { ...newCard, cvv: '***' });
       }
 
+      console.log('Dados do pagamento:', { ...paymentData, newCard: paymentData.newCard ? { ...paymentData.newCard, cvv: '***' } : undefined });
       const res = await api.post('/api/payments/card/create', paymentData);
+      console.log('Resposta do pagamento:', res.data);
       toast.success('Pagamento processado!');
+      // Atualizar carrinho para refletir que foi limpo
+      await fetchCart();
       navigate(`/payment/receipt/${orderId}`);
     } catch (error) {
+      console.error('Erro ao processar pagamento:', error);
+      console.error('Resposta do erro:', error.response?.data);
       toast.error(error.response?.data?.message || 'Erro ao processar pagamento');
     }
   };

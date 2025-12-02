@@ -6,6 +6,7 @@ const OrderItem = require('./OrderItem');
 const { Cart } = require('./cart');
 const Review = require('./review');
 const Payment = require('./payment');
+const PaymentCard = require('./paymentCard');
 const PasswordReset = require('./PasswordReset');
 /**
  * Arquivo responsável por centralizar e exportar todos os modelos Mongoose da aplicação.
@@ -22,5 +23,6 @@ module.exports = {
   Cart,
   Review,
   Payment,
+  PaymentCard,
   PasswordReset
 };
