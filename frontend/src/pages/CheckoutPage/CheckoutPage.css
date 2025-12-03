@@ -87,27 +87,36 @@
   font-size: 0.875rem;
 }
 
-.order-total {
-  border-top: 1px solid #d5d9d9;
-  padding-top: 16px;
+.order-totals {
+  border-top: 1px solid #e7e7e7;
+  padding-top: 20px;
+  margin-top: 20px;
 }
 
-.total-row {
+.order-total-row {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 8px;
-  font-size: 0.875rem;
-  color: #565959;
-}
-
-.total-row.total-final {
-  font-size: 1.125rem;
+  padding: 16px 0;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 14px;
   color: #0f1111;
-  margin-top: 8px;
-  font-weight: 600;
 }
 
-.total-row .free {
+.order-total-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.order-total-row.total {
+  border-top: 2px solid #e7e7e7;
+  margin-top: 12px;
+  padding-top: 20px;
+  padding-bottom: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.order-total-row .free {
   color: #067d62;
   font-weight: 600;
 }

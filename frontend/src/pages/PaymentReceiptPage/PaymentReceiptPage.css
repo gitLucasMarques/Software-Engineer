@@ -454,3 +454,86 @@
     margin: 0;
   }
 }
+
+@media print {
+  /* Ocultar elementos globais */
+  header,
+  footer,
+  .header,
+  .footer {
+    display: none !important;
+  }
+
+  /* Ajustar página para impressão */
+  .receipt-page {
+    background: #ffffff;
+    padding: 0;
+    margin: 0;
+  }
+
+  .receipt-wrapper {
+    max-width: 100%;
+    box-shadow: none;
+  }
+
+  .receipt-top-bar {
+    background: #ffffff;
+    color: #0f1111;
+    border-bottom: 2px solid #0f1111;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .store-logo {
+    color: #0f1111;
+  }
+
+  .receipt-id {
+    color: #0f1111;
+  }
+
+  .success-icon {
+    background: #ffffff;
+    border: 2px solid #0f1111;
+    color: #0f1111;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .receipt-main-container {
+    grid-template-columns: 1fr;
+    page-break-inside: avoid;
+  }
+
+  .receipt-left-column {
+    background: #ffffff;
+    border-right: none;
+    border-bottom: 1px solid #e7e7e7;
+  }
+
+  /* Ocultar botões de ação na impressão */
+  .no-print,
+  .action-buttons {
+    display: none !important;
+  }
+
+  .product-title {
+    color: #0f1111 !important;
+  }
+
+  /* Evitar quebra de página nos blocos */
+  .info-block,
+  .product-item {
+    page-break-inside: avoid;
+  }
+
+  /* Ajustar footer para impressão */
+  .receipt-footer {
+    border-top: 1px solid #e7e7e7;
+    padding: 20px;
+  }
+
+  .footer-note {
+    page-break-inside: avoid;
+  }
+}
