@@ -3,6 +3,10 @@ import { Link } from 'react-router-dom';
 import './Footer.css';
 
 const Footer = () => {
+  const handleLinkClick = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <footer className="footer">
       <div className="footer-container">
@@ -14,20 +18,20 @@ const Footer = () => {
         <div className="footer-section">
           <h4>Links Rápidos</h4>
           <ul>
-            <li><Link to="/products">Jogos</Link></li>
-            <li><Link to="/about">Sobre Nós</Link></li>
-            <li><Link to="/contact">Contato</Link></li>
-            <li><Link to="/faq">FAQ</Link></li>
+            <li><Link to="/products" onClick={handleLinkClick}>Jogos</Link></li>
+            <li><Link to="/about" onClick={handleLinkClick}>Sobre Nós</Link></li>
+            <li><Link to="/contact" onClick={handleLinkClick}>Contato</Link></li>
+            <li><Link to="/faq" onClick={handleLinkClick}>FAQ</Link></li>
           </ul>
         </div>
         
         <div className="footer-section">
           <h4>Suporte</h4>
           <ul>
-            <li><Link to="/faq">Central de Ajuda</Link></li>
-            <li><Link to="/terms">Termos de Uso</Link></li>
-            <li><Link to="/privacy">Privacidade</Link></li>
-            <li><Link to="/returns">Devoluções</Link></li>
+            <li><Link to="/faq" onClick={handleLinkClick}>Central de Ajuda</Link></li>
+            <li><Link to="/terms" onClick={handleLinkClick}>Termos de Uso</Link></li>
+            <li><Link to="/privacy" onClick={handleLinkClick}>Privacidade</Link></li>
+            <li><Link to="/returns" onClick={handleLinkClick}>Devoluções</Link></li>
           </ul>
         </div>
         

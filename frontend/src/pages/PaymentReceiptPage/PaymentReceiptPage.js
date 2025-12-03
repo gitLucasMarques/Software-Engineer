@@ -41,7 +41,12 @@ const PaymentReceiptPage = () => {
   };
 
   if (loading) {
-    return <div className="loading-page">Carregando comprovante...</div>;
+    return (
+      <div className="loading-page">
+        <div className="spinner"></div>
+        <p>Carregando comprovante...</p>
+      </div>
+    );
   }
 
   if (!receipt) {
@@ -50,150 +55,154 @@ const PaymentReceiptPage = () => {
 
   return (
     <div className="receipt-page">
-      <div className="container">
-        <div className="receipt-card">
-          {/* Cabeçalho */}
-          <div className="receipt-header">
-            <h1>✓ Comprovante de Pagamento</h1>
-            <div className="receipt-status success">
-              Pagamento {receipt.paymentStatus === 'paid' ? 'Confirmado' : 'Pendente'}
-            </div>
+      <div className="receipt-wrapper">
+        {/* Header Simples */}
+        <div className="receipt-top-bar">
+          <div className="store-logo">VOXEL</div>
+          <div className="receipt-id">Pedido #{receipt.orderId.slice(-8).toUpperCase()}</div>
+        </div>
+
+        {/* Mensagem de Sucesso */}
+        <div className={`success-message ${receipt.paymentStatus === 'paid' ? 'paid' : 'pending'}`}>
+          <div className="success-icon">
+            {receipt.paymentStatus === 'paid' ? '✓' : '⏳'}
           </div>
+          <div className="success-content">
+            <h1>Pagamento {receipt.paymentStatus === 'paid' ? 'Confirmado' : 'Pendente'}</h1>
+            <p>Obrigado por sua compra!</p>
+            <p className="order-date">
+              {new Date(receipt.date).toLocaleString('pt-BR', {
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+            </p>
+          </div>
+        </div>
 
-          {/* Informações da Transação */}
-          <section className="receipt-section">
-            <h2>Informações da Transação</h2>
-            <div className="info-grid">
-              <div className="info-item">
-                <span className="label">ID do Pedido:</span>
-                <span className="value">{receipt.orderId}</span>
-              </div>
-              <div className="info-item">
-                <span className="label">ID da Transação:</span>
-                <span className="value">{receipt.transactionId || 'N/A'}</span>
-              </div>
-              <div className="info-item">
-                <span className="label">Data:</span>
-                <span className="value">
-                  {new Date(receipt.date).toLocaleString('pt-BR')}
-                </span>
-              </div>
-              <div className="info-item">
-                <span className="label">Método de Pagamento:</span>
-                <span className="value">{getPaymentMethodLabel(receipt.paymentMethod)}</span>
+        {/* Container Principal */}
+        <div className="receipt-main-container">
+          
+          {/* Coluna Esquerda - Informações */}
+          <div className="receipt-left-column">
+            
+            {/* Endereço de Entrega */}
+            <div className="info-block">
+              <h3 className="block-title">Endereço de Entrega</h3>
+              <div className="block-content">
+                <p className="customer-name">{receipt.customer.name}</p>
+                <p>{receipt.shippingAddress.address}</p>
+                <p>{receipt.shippingAddress.city} - {receipt.shippingAddress.state}</p>
+                <p>CEP: {receipt.shippingAddress.zipCode}</p>
+                <p className="customer-phone">{receipt.customer.phone}</p>
               </div>
             </div>
-          </section>
 
-          {/* Detalhes do Pagamento */}
-          {receipt.paymentDetails && (
-            <section className="receipt-section">
-              <h2>Detalhes do Pagamento</h2>
-              <div className="payment-details">
-                {receipt.paymentMethod === 'pix' && (
-                  <div>
-                    <p>Código PIX utilizado</p>
-                  </div>
-                )}
-                {receipt.paymentMethod === 'boleto' && (
-                  <div>
-                    <p><strong>Parcelas:</strong> {receipt.paymentDetails.boletoInstallments}x</p>
-                    <p><strong>Vencimento:</strong> {new Date(receipt.paymentDetails.boletoDueDate).toLocaleDateString()}</p>
-                  </div>
-                )}
-                {(receipt.paymentMethod === 'credit_card' || receipt.paymentMethod === 'debit_card') && (
-                  <div>
-                    <p><strong>Cartão:</strong> {receipt.paymentDetails.cardBrand} **** {receipt.paymentDetails.cardLast4}</p>
-                    <p><strong>Titular:</strong> {receipt.paymentDetails.cardHolderName}</p>
-                    {receipt.paymentDetails.cardInstallments > 1 && (
-                      <p><strong>Parcelas:</strong> {receipt.paymentDetails.cardInstallments}x</p>
+            {/* Método de Pagamento */}
+            <div className="info-block">
+              <h3 className="block-title">Método de Pagamento</h3>
+              <div className="block-content">
+                <p className="payment-method-name">{getPaymentMethodLabel(receipt.paymentMethod)}</p>
+                
+                {receipt.paymentDetails && (
+                  <div className="payment-details-list">
+                    {receipt.paymentMethod === 'pix' && (
+                      <p className="detail-line">✓ Pagamento confirmado via PIX</p>
+                    )}
+                    
+                    {receipt.paymentMethod === 'boleto' && (
+                      <>
+                        <p className="detail-line">Parcelas: {receipt.paymentDetails.boletoInstallments}x</p>
+                        <p className="detail-line">
+                          Vencimento: {new Date(receipt.paymentDetails.boletoDueDate).toLocaleDateString('pt-BR')}
+                        </p>
+                      </>
+                    )}
+                    
+                    {(receipt.paymentMethod === 'credit_card' || receipt.paymentMethod === 'debit_card') && (
+                      <>
+                        <p className="detail-line">
+                          {receipt.paymentDetails.cardBrand} •••• {receipt.paymentDetails.cardLast4}
+                        </p>
+                        <p className="detail-line">Titular: {receipt.paymentDetails.cardHolderName}</p>
+                        {receipt.paymentDetails.cardInstallments > 1 && (
+                          <p className="detail-line">
+                            {receipt.paymentDetails.cardInstallments}x de R$ {(receipt.totalAmount / receipt.paymentDetails.cardInstallments).toFixed(2)}
+                          </p>
+                        )}
+                      </>
                     )}
                   </div>
                 )}
               </div>
-            </section>
-          )}
+            </div>
 
-          {/* Cliente */}
-          <section className="receipt-section">
-            <h2>Cliente</h2>
-            <div className="info-grid">
-              <div className="info-item">
-                <span className="label">Nome:</span>
-                <span className="value">{receipt.customer.name}</span>
-              </div>
-              <div className="info-item">
-                <span className="label">Email:</span>
-                <span className="value">{receipt.customer.email}</span>
-              </div>
-              <div className="info-item">
-                <span className="label">Telefone:</span>
-                <span className="value">{receipt.customer.phone}</span>
+            {/* Resumo do Pedido */}
+            <div className="info-block">
+              <h3 className="block-title">Resumo do Pedido</h3>
+              <div className="block-content">
+                <div className="summary-line">
+                  <span>Subtotal dos itens:</span>
+                  <span>R$ {receipt.totalAmount.toFixed(2)}</span>
+                </div>
+                <div className="summary-line">
+                  <span>Frete e manuseio:</span>
+                  <span>R$ 0,00</span>
+                </div>
+                <div className="summary-line total">
+                  <span>Total:</span>
+                  <span>R$ {receipt.totalAmount.toFixed(2)}</span>
+                </div>
               </div>
             </div>
-          </section>
 
-          {/* Endereço de Entrega */}
-          <section className="receipt-section">
-            <h2>Endereço de Entrega</h2>
-            <div className="address">
-              <p>{receipt.shippingAddress.address}</p>
-              <p>{receipt.shippingAddress.city} - {receipt.shippingAddress.state}</p>
-              <p>CEP: {receipt.shippingAddress.zipCode}</p>
+            {/* Botões de Ação */}
+            <div className="action-buttons no-print">
+              <button onClick={printReceipt} className="btn-receipt btn-primary-receipt">
+                Imprimir pedido
+              </button>
+              <button onClick={() => navigate('/orders')} className="btn-receipt btn-secondary-receipt">
+                Ver todos os pedidos
+              </button>
             </div>
-          </section>
-
-          {/* Itens do Pedido */}
-          <section className="receipt-section">
-            <h2>Itens do Pedido</h2>
-            <div className="items-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Produto</th>
-                    <th>Qtd</th>
-                    <th>Preço Unit.</th>
-                    <th>Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {receipt.items.map((item, index) => (
-                    <tr key={index}>
-                      <td>{item.name}</td>
-                      <td>{item.quantity}</td>
-                      <td>R$ {item.price.toFixed(2)}</td>
-                      <td>R$ {item.total.toFixed(2)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-                <tfoot>
-                  <tr>
-                    <td colSpan="3"><strong>Total</strong></td>
-                    <td><strong>R$ {receipt.totalAmount.toFixed(2)}</strong></td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-          </section>
-
-          {/* Ações */}
-          <div className="receipt-actions no-print">
-            <button onClick={printReceipt} className="btn btn-secondary">
-              🖨️ Imprimir Comprovante
-            </button>
-            <button onClick={() => navigate('/orders')} className="btn btn-primary">
-              Ver Meus Pedidos
-            </button>
-            <button onClick={() => navigate('/')} className="btn btn-secondary">
-              Voltar para Home
-            </button>
           </div>
 
-          {/* Rodapé */}
-          <div className="receipt-footer">
-            <p>Este é um comprovante simulado para fins de demonstração.</p>
-            <p>Game Ecommerce © 2025 - Todos os direitos reservados</p>
+          {/* Coluna Direita - Produtos */}
+          <div className="receipt-right-column">
+            <div className="products-block">
+              <h3 className="block-title">
+                Itens do Pedido
+                <span className="items-count">{receipt.items.length} {receipt.items.length === 1 ? 'item' : 'itens'}</span>
+              </h3>
+              
+              <div className="products-list">
+                {receipt.items.map((item, index) => (
+                  <div key={index} className="product-item">
+                    <div className="product-main-info">
+                      <h4 className="product-title">{item.name}</h4>
+                      <p className="product-price">R$ {item.price.toFixed(2)}</p>
+                    </div>
+                    <div className="product-meta">
+                      <span className="product-qty">Quantidade: {item.quantity}</span>
+                      <span className="product-total">R$ {item.total.toFixed(2)}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
+        </div>
+
+        {/* Footer */}
+        <div className="receipt-footer">
+          <p className="footer-note">
+            Se você tiver alguma dúvida sobre este pedido, visite nossa <a href="/contact">Central de Ajuda</a>
+          </p>
+          <p className="footer-copyright">
+            © 2025 Voxel Store. Todos os direitos reservados.
+          </p>
         </div>
       </div>
     </div>

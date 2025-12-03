@@ -1,7 +1,7 @@
 .payment-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 40px 20px;
+  background: #f0f2f5;
+  padding: 0;
 }
 
 .loading-page {
@@ -256,7 +256,7 @@
 
 .form-group label {
   display: block;
-  color: #333;
+  color: #ffffff;
   font-weight: 600;
   margin-bottom: 8px;
   font-size: 0.95rem;

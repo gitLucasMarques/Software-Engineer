@@ -1,82 +1,89 @@
 .products-page {
-  padding: 40px 20px;
+  padding: 40px;
   min-height: calc(100vh - 70px);
-  background-color: #0f1419;
+  background: #f0f2f5;
 }
 
 .products-page h1 {
-  text-align: center;
-  margin-bottom: 40px;
-  font-size: 2.5rem;
-  color: #ffffff;
-  font-weight: 700;
+  text-align: left;
+  margin-bottom: 32px;
+  font-size: 1.75rem;
+  color: #0f1111;
+  font-weight: 600;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .filters {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
-  margin-bottom: 40px;
-  padding: 20px;
-  background: #0f1419;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  gap: 12px;
+  justify-content: flex-start;
+  margin-bottom: 32px;
+  padding: 24px;
+  background: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #d5d9d9;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .filter-btn {
-  padding: 10px 20px;
-  border: 2px solid #1e3a8a;
-  background: white;
-  color: #1e3a8a;
-  border-radius: 25px;
+  padding: 8px 16px;
+  border: 1px solid #d5d9d9;
+  background: #ffffff;
+  color: #0f1111;
+  border-radius: 20px;
   cursor: pointer;
-  font-size: 1rem;
-  font-weight: 500;
-  transition: all 0.3s ease;
+  font-size: 0.875rem;
+  font-weight: 400;
+  transition: all 0.2s ease;
 }
 
 .filter-btn:hover {
-  background: #1e3a8a;
-  color: white;
-  transform: translateY(-2px);
+  background: #f7f8f8;
+  border-color: #888c8c;
 }
 
 .filter-btn.active {
-  background: #1e3a8a;
-  color: white;
-  box-shadow: 0 4px 12px rgba(30, 58, 138, 0.3);
+  background: #232f3e;
+  color: #ffffff;
+  border-color: #232f3e;
 }
 
 .products-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 30px;
+  gap: 20px;
   margin-bottom: 40px;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .product-card {
   background: #ffffff;
-  border-radius: 12px;
+  border-radius: 8px;
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   text-decoration: none;
   color: inherit;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e5e7eb;
+  border: 1px solid #d5d9d9;
 }
 
 .product-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 12px 24px rgba(30, 58, 138, 0.15);
-  border-color: #1e3a8a;
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-color: #888c8c;
 }
 
 .product-image {
   position: relative;
   height: 350px;
   overflow: hidden;
-  background-color: #f3f4f6;
+  background: #f7f8f8;
 }
 
 .product-image img {
@@ -89,26 +96,25 @@
   position: absolute;
   top: 12px;
   right: 12px;
-  background-color: #dc2626;
-  color: white;
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-weight: 700;
-  font-size: 0.9rem;
-  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+  background: #cc0c39;
+  color: #ffffff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.875rem;
 }
 
 .product-info {
-  padding: 20px;
+  padding: 16px;
 }
 
 .product-info h3 {
   margin-bottom: 8px;
-  color: #111827;
-  font-size: 1.1rem;
-  font-weight: 600;
-  line-height: 1.4;
-  min-height: 2.8rem;
+  color: #0f1111;
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.3;
+  min-height: 2.6rem;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -116,11 +122,12 @@
 }
 
 .product-genre {
-  color: #6b7280;
+  color: #565959;
   margin-bottom: 12px;
-  font-size: 0.9rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  font-weight: 500;
 }
 
 .product-price {
@@ -130,41 +137,61 @@
 }
 
 .current-price {
-  font-size: 1.5rem;
-  color: #1e3a8a;
-  font-weight: 700;
+  font-size: 1.25rem;
+  color: #b12704;
+  font-weight: 600;
 }
 
 .original-price {
-  font-size: 1rem;
-  color: #9ca3af;
+  font-size: 0.875rem;
+  color: #888888;
   text-decoration: line-through;
 }
 
 .loading-spinner {
   text-align: center;
   padding: 60px 20px;
-  font-size: 1.5rem;
-  color: #666;
+  font-size: 1.125rem;
+  color: #565959;
 }
 
 .no-products {
   text-align: center;
-  padding: 60px 20px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 40px 20px;
+  background: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #d5d9d9;
   margin: 40px auto;
   max-width: 600px;
 }
 
 .no-products h2 {
-  font-size: 1.8rem;
-  color: #333;
-  margin-bottom: 10px;
+  font-size: 1.5rem;
+  color: #0f1111;
+  margin-bottom: 8px;
+  font-weight: 600;
 }
 
 .no-products p {
-  font-size: 1.1rem;
-  color: #666;
+  font-size: 1rem;
+  color: #565959;
+}
+
+@media (max-width: 768px) {
+  .products-page {
+    padding: 20px;
+  }
+
+  .products-page h1 {
+    font-size: 1.5rem;
+  }
+
+  .filters {
+    padding: 16px;
+    gap: 8px;
+  }
+
+  .products-grid {
+    gap: 12px;
+  }
 }

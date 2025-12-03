@@ -10,8 +10,8 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #0f1419;
-  color: #ffffff;
+  background-color: #f0f2f5;
+  color: #0f1111;
 }
 
 code {
@@ -59,7 +59,7 @@ code {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #68d391;
   color: white;
 }
 
@@ -89,22 +89,6 @@ code {
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
-
-input, textarea, select {
-  width: 100%;
-  padding: 12px 16px;
-  border: 2px solid #2d3748;
-  border-radius: 8px;
-  font-size: 1rem;
-  background-color: #1a202c;
-  color: white;
-  transition: border-color 0.3s ease;
-}
-
-input:focus, textarea:focus, select:focus {
-  outline: none;
-  border-color: #667eea;
 }
 
 .error-message {
